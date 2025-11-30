@@ -263,14 +263,39 @@ function endGame() {
   restartBtn.style.display = "block";
 }
 
-// === RESTART ========================================
-restartBtn.onclick = ()=> {
-  score = 0;
-  lives = 3;
-  level = 1;
-  gameOver = false;
-  spawnEnemies();
-  restartBtn.style.display="none";
+// === RESTART =========================================
+  restartBtn.addEventListener("click", () => {
+    // Alles zurücksetzen
+    score = 0;               // Score auf 0
+    level = 1;               // Level auf 1
+    lives = 3;               // Leben auf 3
+
+    // Spielerposition zurücksetzen
+    player.x = canvas.width / 2 - player.size / 2;
+    player.y = canvas.height - 120;
+
+    // Gegner zurücksetzen
+    enemies.forEach(e => {
+        if (typeof e.reset === "function") e.reset();
+        else {
+            e.x = Math.random() * (canvas.width - 40);
+            e.y = -Math.random() * 400 - 40;
+        }
+    });
+
+    // Powerups & Projektile löschen
+    powerups = [];
+    bullets = [];
+
+    // GameOver zurücksetzen
+    gameOver = false;
+
+    // Button ausblenden
+    restartBtn.style.display = "none";
+
+    // Info aktualisieren
+    if (info) info.textContent = `Score: ${score} | Lives: ${lives} | Level: ${level}`;
+});
 };
 
 // === GAME LOOP ======================================
