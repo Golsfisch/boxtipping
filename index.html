@@ -1,377 +1,177 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BoxTipping Ultimate</title>
+<title>BoxTipping</title>
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-  font-family: Arial;
-  background: linear-gradient(180deg,#111,#222,#111);
-  color: white;
-  user-select: none;
-}
-header {
-  text-align: center;
-  padding: 10px;
-  font-size: 24px;
-  font-weight: bold;
-}
-#infoBox {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0,0,0,0.4);
-  padding: 8px 15px;
-  border-radius: 8px;
-  font-size: 16px;
-}
-canvas {
-  display: block;
-  margin: 0 auto;
-  background: rgba(0,0,0,0.2);
-  border: 2px solid white;
-  border-radius: 10px;
-  backdrop-filter: blur(4px);
-}
-#restartBtn, #payBtn, #connectBtn {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 20px;
-  background: lime;
-  color: black;
-  border: none;
-  border-radius: 10px;
-  font-size: 18px;
-  display: none;
-  cursor: pointer;
-}
-#restartBtn { top: 55%; }
-#payBtn { top: 65%; }
-#connectBtn { top: 75%; }
-
-.powerup {
-  position: absolute;
-  top: 5px;
-  right: 10px;
-  background: rgba(255,255,255,0.1);
-  padding: 5px 10px;
-  border-radius: 8px;
-}
+    body { margin:0; background:#111; color:white; font-family:Arial; }
+    #game { background:#222; display:block; margin:0 auto; }
+    #ui {
+        position:fixed; top:10px; left:10px; font-size:20px;
+        background:rgba(0,0,0,0.4); padding:10px; border-radius:6px;
+    }
+    #restartBtn {
+        position:fixed; top:50%; left:50%;
+        transform:translate(-50%, -50%);
+        padding:15px 25px; font-size:20px;
+        display:none; background:#f00; border:none; border-radius:8px;
+        color:white; cursor:pointer;
+    }
+    #menuBtn {
+        position:fixed; bottom:20px; right:20px;
+        padding:12px 20px; font-size:18px;
+        background:#444; border:none; border-radius:6px;
+        color:white; cursor:pointer;
+    }
 </style>
 </head>
 <body>
 
-<header>BoxTipping Ultimate</header>
+<canvas id="game" width="400" height="600"></canvas>
 
-<div id="infoBox">Score: 0 | Lives: 3 | Level: 1</div>
-
-<canvas id="gameCanvas" width="400" height="700"></canvas>
+<div id="ui">
+    Score: <span id="score">0</span><br>
+    Lives: <span id="lives">3</span><br>
+    Level: <span id="level">1</span>
+</div>
 
 <button id="restartBtn">Restart</button>
-<button id="payBtn">Freischalten (0.0001 ETH)</button>
-<button id="connectBtn">Wallet verbinden</button>
+<button id="menuBtn">Menü</button>
 
 <script>
-// === CANVAS SETUP ==================================
-const canvas = document.getElementById("gameCanvas");
+// -------------------------------------------
+// VARIABLES
+// -------------------------------------------
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const restartBtn = document.getElementById("restartBtn");
-const payBtn = document.getElementById("payBtn");
-const connectBtn = document.getElementById("connectBtn");
-const info = document.getElementById("infoBox");
 
-// === GAME STATE =====================================
 let score = 0;
 let lives = 3;
 let level = 1;
-let gameOver = false;
-let payUnlocked = false;
 
-// === PLAYER =========================================
-let player = {
-  x: canvas.width/2 - 25,
-  y: canvas.height - 120,
-  size: 50,
-  speed: 6,
-  gunActive: false,
-  gunTimer: 0
+let gameRunning = true;
+let gameLoopID = null;
+
+// Player
+const player = {
+    x: 180,
+    y: 550,
+    w: 40,
+    h: 40,
+    speed: 6
 };
 
-// === ENEMY CLASS ====================================
-class Enemy {
-  constructor() {
-    this.reset();
-  }
-  reset() {
-    this.size = 40;
-    this.x = Math.random() * (canvas.width - this.size);
-    this.y = -Math.random() * 400 - this.size;
-    this.speed = 2 + level * 0.5;
-  }
-  draw() {
-    ctx.fillStyle = "yellow";
-    ctx.fillRect(this.x, this.y, this.size, this.size);
-  }
-  update() {
-    this.y += this.speed;
-    if (this.y > canvas.height) this.reset();
-    if (collide(player, this)) {
-      lives--;
-      this.reset();
-      if (lives <= 0) endGame();
-    }
-  }
-}
+// Enemy
+let enemy = {
+    x: 180,
+    y: 0,
+    w: 40,
+    h: 40,
+    speed: 2
+};
 
-let enemies = [];
-function spawnEnemies() {
-  enemies = [];
-  for (let i = 0; i < 6 + level * 2; i++) enemies.push(new Enemy());
-}
+// -------------------------------------------
+// GAME LOOP
+// -------------------------------------------
+function gameLoop() {
+    gameLoopID = requestAnimationFrame(gameLoop);
+    if (!gameRunning) return;
 
-// === COLLISION ======================================
-function collide(a, b) {
-  return !(a.x + a.size < b.x ||
-           a.x > b.x + b.size ||
-           a.y + a.size < b.y ||
-           a.y > b.y + b.size);
-}
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-// === PLAYER MOVE ====================================
-document.addEventListener("mousemove", e => {
-  const rect = canvas.getBoundingClientRect();
-  player.x = Math.min(Math.max(e.clientX - rect.left - player.size/2, 0), canvas.width - player.size);
-});
-document.addEventListener("touchmove", e => {
-  const rect = canvas.getBoundingClientRect();
-  player.x = e.touches[0].clientX - rect.left - player.size/2;
-  if (player.x < 0) player.x = 0;
-  if (player.x > canvas.width - player.size) player.x = canvas.width - player.size;
-  e.preventDefault();
-});
-
-// === POWER UPS ======================================
-let powerups = [];
-class Powerup {
-  constructor(type) {
-    this.type = type;
-    this.x = Math.random() * (canvas.width-30);
-    this.y = -50;
-    this.speed = 2;
-    this.size = 30;
-  }
-  draw() {
-    ctx.fillStyle = this.type === "gun" ? "cyan" : "orange";
-    ctx.fillRect(this.x, this.y, this.size, this.size);
-  }
-  update() {
-    this.y += this.speed;
-    if (this.y > canvas.height) this.dead = true;
-    if (collide(player, this)) {
-      activatePowerup(this.type);
-      this.dead = true;
-    }
-  }
-}
-function activatePowerup(type) {
-  if (type === "gun") {
-    player.gunActive = true;
-    player.gunTimer = 300;
-  }
-}
-
-// === GUN ============================================
-let bullets = [];
-class Bullet {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.size = 5;
-    this.speed = 8;
-  }
-  draw() {
+    // Draw player
     ctx.fillStyle = "red";
-    ctx.fillRect(this.x, this.y, this.size, this.size*2);
-  }
-  update() {
-    this.y -= this.speed;
-    enemies.forEach(e=>{
-      if (collide(this, e)) {
-        e.reset();
-        this.dead = true;
-        score += 5;
-      }
-    });
-    if (this.y < -10) this.dead = true;
-  }
-}
+    ctx.fillRect(player.x, player.y, player.w, player.h);
 
-// === ANIMATED BACKGROUND ============================
-let stars = [];
-for (let i=0; i<150; i++){
-  stars.push({x:Math.random()*400, y:Math.random()*700, speed:0.5+Math.random()*1});
-}
-function drawStars() {
-  ctx.fillStyle="white";
-  stars.forEach(s=>{
-    ctx.fillRect(s.x,s.y,2,2);
-    s.y += s.speed;
-    if(s.y>700){s.y=0; s.x=Math.random()*400;}
-  });
-}
+    // Move enemy
+    enemy.y += enemy.speed;
 
-// === ETH WALLET / PAYMENT ===========================
-let wallet = null;
+    // Draw enemy
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
 
-connectBtn.style.display = "block";
+    // Collision
+    if (
+        enemy.y + enemy.h >= player.y &&
+        enemy.x < player.x + player.w &&
+        enemy.x + enemy.w > player.x
+    ) {
+        lives--;
+        document.getElementById("lives").innerText = lives;
+        resetEnemy();
 
-connectBtn.onclick = async ()=> {
-  if (window.ethereum) {
-    try {
-      const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-      wallet = accounts[0];
-      connectBtn.style.display="none";
-      alert("Wallet verbunden: " + wallet);
-    } catch(e) {
-      alert("Wallet verweigert.");
+        if (lives <= 0) endGame();
     }
-  } else alert("Kein Metamask gefunden!");
-};
 
-payBtn.onclick = async ()=> {
-  if (!wallet) return alert("Bitte zuerst Wallet verbinden.");
-  try {
-    const tx = await ethereum.request({
-      method: "eth_sign",
-      params: [wallet, "Zahlung für Level 4 (0.0001 ETH simuliert)"]
-    });
-    payUnlocked = true;
-    payBtn.style.display="none";
-    alert("Level 4 freigeschaltet!");
-  } catch(e) {
-    alert("Signatur abgebrochen.");
-  }
-};
+    // Enemy passed bottom
+    if (enemy.y > 600) {
+        score += 10;
+        document.getElementById("score").innerText = score;
+        resetEnemy();
+    }
+}
 
-// === GAME END =======================================
+function resetEnemy() {
+    enemy.y = -40;
+    enemy.x = Math.random() * 360;
+}
+
+// -------------------------------------------
+// ENDGAME
+// -------------------------------------------
 function endGame() {
-  gameOver = true;
-  document.getElementById("restartBtn").style.display = "block";
-  restartBtn.style.display = "block";
+    gameRunning = false;
+    document.getElementById("restartBtn").style.display = "block";
 }
 
-// === RESTART ========================================
-restartBtn.onclick = ()=> {
-  score = 0;
-  lives = 3;
-  level = 1;
-  gameOver = false;
-  spawnEnemies();
-  restartBtn.style.display="none";
+// -------------------------------------------
+// RESTART FUNCTION (100% WORKING)
+// -------------------------------------------
+function restartGame() {
+    cancelAnimationFrame(gameLoopID);
+
+    score = 0;
+    lives = 3;
+    level = 1;
+
+    document.getElementById("score").innerText = score;
+    document.getElementById("lives").innerText = lives;
+    document.getElementById("level").innerText = level;
+
+    enemy.x = Math.random() * 360;
+    enemy.y = -40;
+
+    gameRunning = true;
+    document.getElementById("restartBtn").style.display = "none";
+
+    gameLoop();
+}
+
+document.getElementById("restartBtn").addEventListener("click", restartGame);
+
+// -------------------------------------------
+// PLAYER MOVEMENT
+// -------------------------------------------
+document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") player.x -= player.speed;
+    if (e.key === "ArrowRight") player.x += player.speed;
+
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.w > 400) player.x = 360;
+});
+
+// -------------------------------------------
+// MENU BUTTON
+// -------------------------------------------
+document.getElementById("menuBtn").onclick = () => {
+    window.location.href = "seite3.html";
 };
 
-// === GAME LOOP ======================================
-spawnEnemies();
-
-function gameLoop(){
-  ctx.clearRect(0,0,400,700);
-
-  drawStars();
-
-  ctx.fillStyle = "red";
-  ctx.fillRect(player.x, player.y, player.size, player.size);
-
-  enemies.forEach(e=>{ e.update(); e.draw(); });
-
-  if (player.gunActive) {
-    player.gunTimer--;
-    if (player.gunTimer % 10 === 0)
-      bullets.push(new Bullet(player.x+player.size/2, player.y));
-    if (player.gunTimer <= 0) player.gunActive = false;
-  }
-
-  bullets.forEach(b=>b.update());
-  bullets = bullets.filter(b=>!b.dead);
-  bullets.forEach(b=>b.draw());
-
-  if (Math.random() < 0.003 && level < 4)
-    powerups.push(new Powerup("gun"));
-  powerups.forEach(p=>p.update());
-  powerups = powerups.filter(p=>!p.dead);
-  powerups.forEach(p=>p.draw());
-
-  score += 0.05;
-
-  if (score > level * 50 && level < 4 && !gameOver) {
-    level++;
-    spawnEnemies();
-  }
-
-  if (level >= 4 && !payUnlocked) {
-    payBtn.style.display="block";
-    gameOver = true;
-  }
-
-  info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
-
-  if (!gameOver) requestAnimationFrame(gameLoop);
-}
+// -------------------------------------------
+// START GAME
+// -------------------------------------------
 gameLoop();
 </script>
 
- // -----------------------------
-// UNIVERSAL RESTART SYSTEM
-// -----------------------------
-let restartTriggered = false;
-
-function restartGame() {
-    if (restartTriggered) return; 
-    restartTriggered = true;
-
-    console.warn("🔄 Restart wurde ausgelöst...");
-
-    // 1. Game Loop sicher stoppen
-    cancelAnimationFrame(gameLoopID);
-
-    // 2. Variablen zurücksetzen (außer Score & Level wenn du willst)
-    lives = 3;  
-    gameOver = false;
-    isGameRunning = true;
-
-    // 3. Spielfeld leeren
-    if (typeof bullets !== "undefined") bullets.length = 0;
-    if (typeof enemies !== "undefined") enemies.length = 0;
-    if (typeof powerups !== "undefined") powerups.length = 0;
-
-    // 4. Spielerposition zurücksetzen
-    if (player) {
-        player.x = canvas.width / 2;
-        player.y = canvas.height - 50;
-        player.isShooting = false;
-    }
-
-    // 5. Buttons ausblenden
-    const rb = document.getElementById("restartBtn");
-    if (rb) rb.style.display = "none";
-
-    // 6. Paywall zurücksetzen
-    if (typeof payUnlocked !== "undefined") payUnlocked = false;
-
-    // 7. Game Loop NEU STARTEN
-    restartTriggered = false;
-    console.warn("▶ Spiel startet neu…");
-    startGameLoop();
-}
-
-// Restart Button Listener
-document.getElementById("restartBtn").addEventListener("click", restartGame);
-
-// -----------------------------
-// SPIEL NEU STARTEN FUNKTION ENDE
-// ----------------------------- 
 </body>
 </html>
