@@ -322,5 +322,55 @@ function gameLoop(){
 gameLoop();
 </script>
 
+ // -----------------------------
+// UNIVERSAL RESTART SYSTEM
+// -----------------------------
+let restartTriggered = false;
+
+function restartGame() {
+    if (restartTriggered) return; 
+    restartTriggered = true;
+
+    console.warn("🔄 Restart wurde ausgelöst...");
+
+    // 1. Game Loop sicher stoppen
+    cancelAnimationFrame(gameLoopID);
+
+    // 2. Variablen zurücksetzen (außer Score & Level wenn du willst)
+    lives = 3;  
+    gameOver = false;
+    isGameRunning = true;
+
+    // 3. Spielfeld leeren
+    if (typeof bullets !== "undefined") bullets.length = 0;
+    if (typeof enemies !== "undefined") enemies.length = 0;
+    if (typeof powerups !== "undefined") powerups.length = 0;
+
+    // 4. Spielerposition zurücksetzen
+    if (player) {
+        player.x = canvas.width / 2;
+        player.y = canvas.height - 50;
+        player.isShooting = false;
+    }
+
+    // 5. Buttons ausblenden
+    const rb = document.getElementById("restartBtn");
+    if (rb) rb.style.display = "none";
+
+    // 6. Paywall zurücksetzen
+    if (typeof payUnlocked !== "undefined") payUnlocked = false;
+
+    // 7. Game Loop NEU STARTEN
+    restartTriggered = false;
+    console.warn("▶ Spiel startet neu…");
+    startGameLoop();
+}
+
+// Restart Button Listener
+document.getElementById("restartBtn").addEventListener("click", restartGame);
+
+// -----------------------------
+// SPIEL NEU STARTEN FUNKTION ENDE
+// ----------------------------- 
 </body>
 </html>
