@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BoxTipping - Version 1</title>
+<title>BoxTipping Ultimate</title>
 <style>
 body {
   margin: 0;
@@ -38,7 +38,7 @@ canvas {
 }
 button {
   display: block;
-  margin: 20px auto;
+  margin: 10px auto;
   padding: 12px 20px;
   background: lime;
   color: black;
@@ -48,24 +48,32 @@ button {
   cursor: pointer;
 }
 #restartBtn {background: orange;}
-#toVersion2Btn {background: #4CAF50;}
+#toPage2Btn {background: #4CAF50;}
+#payBtn {display:none;}
+#connectBtn {display:none;}
 </style>
 </head>
 <body>
 
-<header>BoxTipping 😊</header>
+<header>BoxTipping Ultimate</header>
+
 <div id="infoBox">Score: 0 | Lives: 3 | Level: 1</div>
+
 <canvas id="gameCanvas" width="400" height="700"></canvas>
 
 <button id="restartBtn">Restart</button>
-<button id="toVersion2Btn">Zur Version 2</button>
+<button id="toPage2Btn">Zur BoxTipping Version2</button>
+<button id="payBtn">Freischalten (0.0001 ETH)</button>
+<button id="connectBtn">Wallet verbinden</button>
 
 <script>
 // === CANVAS SETUP ==================================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const restartBtn = document.getElementById("restartBtn");
-const toVersion2Btn = document.getElementById("toVersion2Btn");
+const toPage2Btn = document.getElementById("toPage2Btn");
+const payBtn = document.getElementById("payBtn");
+const connectBtn = document.getElementById("connectBtn");
 const info = document.getElementById("infoBox");
 
 // === GAME STATE =====================================
@@ -73,14 +81,15 @@ let score = 0;
 let lives = 3;
 let level = 1;
 let gameOver = false;
+let payUnlocked = false;
 
 // === PLAYER =========================================
-let player = { x: canvas.width/2 - 25, y: canvas.height - 120, size: 50, speed: 6 };
+let player = { x: canvas.width/2 - 25, y: canvas.height - 120, size: 50, gunActive:false, gunTimer:0 };
 
 // === ENEMY CLASS ====================================
 class Enemy {
   constructor() { this.reset(); }
-  reset() { this.size=40; this.x=Math.random()*(canvas.width-this.size); this.y=-Math.random()*400-40; this.speed=2+level*0.5; }
+  reset() { this.size=40; this.x=Math.random()*(canvas.width-40); this.y=-Math.random()*400-40; this.speed=2+level*0.5; }
   draw(){ctx.fillStyle="yellow"; ctx.fillRect(this.x,this.y,this.size,this.size);}
   update(){
     this.y+=this.speed;
@@ -88,8 +97,9 @@ class Enemy {
     if(collide(player,this)){ lives--; this.reset(); if(lives<=0) endGame(); }
   }
 }
+
 let enemies = [];
-function spawnEnemies(){ enemies=[]; for(let i=0;i<6;i++) enemies.push(new Enemy()); }
+function spawnEnemies(){ enemies=[]; for(let i=0;i<6+level*2;i++) enemies.push(new Enemy()); }
 spawnEnemies();
 
 // === COLLISION ======================================
@@ -108,36 +118,67 @@ document.addEventListener("touchmove", e=>{
   e.preventDefault();
 });
 
+// === POWER UPS ======================================
+let powerups = [];
+class Powerup {
+  constructor(type) { this.type=type; this.x=Math.random()*(canvas.width-30); this.y=-50; this.speed=2; this.size=30; }
+  draw(){ctx.fillStyle=this.type==="gun"?"cyan":"orange"; ctx.fillRect(this.x,this.y,this.size,this.size);}
+  update(){ this.y+=this.speed; if(this.y>canvas.height)this.dead=true; if(collide(player,this)){ activatePowerup(this.type); this.dead=true;} }
+}
+function activatePowerup(type){ if(type==="gun"){ player.gunActive=true; player.gunTimer=300; } }
+
+// === BULLETS ========================================
+let bullets=[];
+class Bullet{ constructor(x,y){ this.x=x; this.y=y; this.size=5; this.speed=8;}
+  draw(){ctx.fillStyle="red"; ctx.fillRect(this.x,this.y,this.size,this.size*2);}
+  update(){ this.y-=this.speed; enemies.forEach(e=>{ if(collide(this,e)){ e.reset(); this.dead=true; score+=5; }}); if(this.y<-10)this.dead=true;}
+}
+
+// === BACKGROUND =====================================
+let stars=[]; for(let i=0;i<150;i++) stars.push({x:Math.random()*400,y:Math.random()*700,speed:0.5+Math.random()*1});
+function drawStars(){ ctx.fillStyle="white"; stars.forEach(s=>{ctx.fillRect(s.x,s.y,2,2); s.y+=s.speed; if(s.y>700){s.y=0;s.x=Math.random()*400;}});}
+
 // === GAME END =======================================
 function endGame(){ gameOver=true; restartBtn.style.display="block"; }
 
 // === RESTART ========================================
 restartBtn.onclick = ()=>{
-  score=0; lives=3; level=1; gameOver=false; spawnEnemies();
+  score=0; lives=3; level=1; gameOver=false; payUnlocked=false;
+  player.gunActive=false; player.gunTimer=0;
+  spawnEnemies();
+  powerups=[]; bullets=[];
   restartBtn.style.display="none";
+  payBtn.style.display="none";
+  connectBtn.style.display="none";
   info.textContent=`Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
+  if(!gameOver) gameLoop();
 };
 
-// === REDIRECT TO VERSION 2 =========================
-toVersion2Btn.onclick = ()=>{ window.location.href="version2.html"; };
+// === VERSION2 BUTTON =================================
+toPage2Btn.onclick = ()=>{ window.location.href="seite2.html"; };
 
 // === GAME LOOP ======================================
 function gameLoop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Spieler
-  ctx.fillStyle="red";
-  ctx.fillRect(player.x,player.y,player.size,player.size);
-
-  // Gegner
+  ctx.clearRect(0,0,400,700);
+  drawStars();
+  ctx.fillStyle="red"; ctx.fillRect(player.x,player.y,player.size,player.size);
   enemies.forEach(e=>{e.update(); e.draw();});
-
-  // Score
-  score += 0.05;
-  if(score > level*50 && level<4 && !gameOver){ level++; spawnEnemies(); }
-
+  if(player.gunActive){
+    player.gunTimer--;
+    if(player.gunTimer%10===0) bullets.push(new Bullet(player.x+player.size/2, player.y));
+    if(player.gunTimer<=0) player.gunActive=false;
+  }
+  bullets.forEach(b=>b.update());
+  bullets=bullets.filter(b=>!b.dead);
+  bullets.forEach(b=>b.draw());
+  if(Math.random()<0.003 && level<4) powerups.push(new Powerup("gun"));
+  powerups.forEach(p=>p.update());
+  powerups=powerups.filter(p=>!p.dead);
+  powerups.forEach(p=>p.draw());
+  score+=0.05;
+  if(score>level*50 && level<4 && !gameOver){ level++; spawnEnemies(); }
+  if(level>=4 && !payUnlocked){ payBtn.style.display="block"; gameOver=true; }
   info.textContent=`Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
-
   if(!gameOver) requestAnimationFrame(gameLoop);
 }
 gameLoop();
