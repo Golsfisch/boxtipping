@@ -263,15 +263,34 @@ function endGame() {
   restartBtn.style.display = "block";
 }
 
-// === RESTART ========================================
-restartBtn.onclick = ()=> {
-  score = 0;
-  lives = 3;
-  level = 1;
-  gameOver = false;
-  spawnEnemies();
-  restartBtn.style.display="none";
-};
+// === RESTART =========================================
+restartBtn.addEventListener("click", () => {
+    // 1️⃣ Variablen zurücksetzen
+    score = 0;           // Punkte
+    lives = 3;           // Leben
+    level = 1;           // Level
+    gameOver = false;    // Game Over zurücksetzen
+    gameRunning = true;  // Spiel-Logik wieder aktiv
+
+    // 2️⃣ Spielerposition zurücksetzen
+    player.x = canvas.width / 2 - player.size / 2;
+    player.y = canvas.height - 120;
+
+    // 3️⃣ Gegner, Bullets und Powerups löschen
+    enemies = [];
+    bullets = [];
+    powerups = [];
+
+    // 4️⃣ Buttons ausblenden
+    restartBtn.style.display = "none";
+
+    // 5️⃣ Falls du Gegner neu spawnst
+    if (typeof spawnEnemies === "function") spawnEnemies();
+
+    // 6️⃣ GameLoop muss NICHT neu gestartet werden, er läuft ja schon
+});
+
+  
 
 // === GAME LOOP ======================================
 spawnEnemies();
