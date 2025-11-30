@@ -7,10 +7,14 @@
 <style>
 body {margin:0;font-family:sans-serif;overflow:hidden;user-select:none;background:#111;color:#fff;}
 header {width:100%;text-align:center;padding:15px;font-size:24px;font-weight:bold;}
-canvas {border:2px solid #fff;border-radius:10px;display:block;margin:20px auto;background:#111;}
+section {width:100%;height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;position:relative;}
+canvas {border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111;}
 #info {position:absolute;top:20px;left:10px;font-size:18px;background:rgba(0,0,0,0.3);padding:5px 10px;border-radius:5px;}
 #weapons {position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:10px;}
 .weaponBtn {padding:10px 15px;border:none;border-radius:5px;font-weight:bold;cursor:pointer;}
+#laserBtn {background:red;color:#fff;}
+#bombBtn {background:blue;color:#fff;}
+#freezeBtn {background:cyan;color:#000;}
 #restartBtn {position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;padding:10px 20px;background:lime;color:#000;border:none;border-radius:5px;cursor:pointer;}
 #darkModeToggle {position:absolute;top:20px;right:20px;padding:8px 12px;border-radius:5px;background:#555;color:#fff;cursor:pointer;}
 #brand {position:absolute;bottom:10px;left:10px;font-size:14px;color:#888;}
@@ -20,6 +24,9 @@ canvas {border:2px solid #fff;border-radius:10px;display:block;margin:20px auto;
 
 <header>BoxTipping 😊</header>
 <div id="darkModeToggle">Dark Mode</div>
+
+<!-- GAME SECTION -->
+<section id="gameSection" style="display:flex;">
 <div id="info">Score: 0 | Lives: 3</div>
 <canvas id="gameCanvas" width="360" height="640"></canvas>
 <div id="weapons">
@@ -27,10 +34,37 @@ canvas {border:2px solid #fff;border-radius:10px;display:block;margin:20px auto;
   <button id="bombBtn" class="weaponBtn">Bomb</button>
   <button id="freezeBtn" class="weaponBtn">Freeze</button>
 </div>
-<button id="restartBtn">Restart</button>
 <div id="brand">@thesafe</div>
+<button id="restartBtn">Restart</button>
+<button id="toMainBtn" style="position:absolute;top:60px;left:50%;transform:translateX(-50%);padding:8px 12px;border-radius:5px;background:#888;color:#fff;border:none;cursor:pointer;">Go to Main Page</button>
+</section>
+
+<!-- MAIN PAGE -->
+<section id="mainSection">
+<h1>Main Page</h1>
+<div style="display:flex; flex-wrap:wrap; justify-content:center; width:100%; gap:10px; margin-top:20px;">
+  <div style="width:45%; height:200px; background:#444; border-radius:10px; display:flex; align-items:center; justify-content:center;">Platzhalter 1</div>
+  <div style="width:45%; height:200px; background:#555; border-radius:10px; display:flex; align-items:center; justify-content:center;">Platzhalter 2</div>
+  <div style="width:45%; height:200px; background:#666; border-radius:10px; display:flex; align-items:center; justify-content:center;">Platzhalter 3</div>
+  <div style="width:45%; height:200px; background:#777; border-radius:10px; display:flex; align-items:center; justify-content:center;">Platzhalter 4</div>
+</div>
+<button id="backToGame" style="margin-top:20px;padding:8px 12px;border-radius:5px;background:#888;color:#fff;border:none;cursor:pointer;">Back to Game</button>
+<div id="brand">@thesafe</div>
+</section>
 
 <script>
+// --- PAGE SWITCH ---
+const gameSection=document.getElementById('gameSection');
+const mainSection=document.getElementById('mainSection');
+document.getElementById('toMainBtn').addEventListener('click',()=>{
+  gameSection.style.display='none';
+  mainSection.style.display='flex';
+});
+document.getElementById('backToGame').addEventListener('click',()=>{
+  mainSection.style.display='none';
+  gameSection.style.display='flex';
+});
+
 // --- DARK MODE ---
 const darkToggle=document.getElementById('darkModeToggle');
 let darkMode=localStorage.getItem('darkMode')||'dark';
