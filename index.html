@@ -3,110 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BoxTipping - Level 4</title>
+<title>BoxTipping - Clean Start</title>
 <style>
 body {margin:0;font-family:sans-serif;overflow:hidden;user-select:none;background:#111;color:#fff;}
-header {width:100%;text-align:center;padding:15px;font-size:24px;font-weight:bold;}
-section {width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
-canvas {border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111;}
-#info {position:absolute;top:20px;left:10px;font-size:18px;background:rgba(0,0,0,0.3);padding:5px 10px;border-radius:5px;}
+header {text-align:center;padding:15px;font-size:24px;font-weight:bold;}
+#info {position:absolute;top:20px;left:10px;background:rgba(0,0,0,0.3);padding:5px 10px;border-radius:5px;}
+canvas {display:block;margin:0 auto;background:#222;border:2px solid #fff;border-radius:10px;}
 #restartBtn {position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;padding:10px 20px;background:lime;color:#000;border:none;border-radius:5px;cursor:pointer;}
-#toMainBtn {position:absolute;top:60px;left:50%;transform:translateX(-50%);padding:8px 12px;border-radius:5px;background:#888;color:#fff;border:none;cursor:pointer;}
-#mainPage {display:none;padding:20px;}
 </style>
 </head>
 <body>
 
 <header>BoxTipping 😊</header>
-
-<!-- GAME SECTION -->
-<section id="gameSection">
 <div id="info">Score: 0 | Lives: 3 | Level: 1</div>
 <canvas id="gameCanvas" width="360" height="640"></canvas>
 <button id="restartBtn">Restart</button>
-<button id="toMainBtn">Weiter zur Main Page</button>
-</section>
-
-<!-- MAIN PAGE -->
-<section id="mainPage">
-<h1>Main Page</h1>
-<p>Hier geht es später weiter mit Krypto-Zahlungen, Guthaben usw.</p>
-<button id="backToGame" style="margin-top:20px;padding:8px 12px;border-radius:5px;background:#888;color:#fff;border:none;cursor:pointer;">Back to Game</button>
-</section>
 
 <script>
-const canvas=document.getElementById('gameCanvas');
-const ctx=canvas.getContext('2d');
-const info=document.getElementById('info');
-const restartBtn=document.getElementById('restartBtn');
-const gameSection=document.getElementById('gameSection');
-const mainPage=document.getElementById('mainPage');
-const toMainBtn=document.getElementById('toMainBtn');
-const backToGame=document.getElementById('backToGame');
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const info = document.getElementById('info');
+const restartBtn = document.getElementById('restartBtn');
 
-let score=0, lives=3, level=1, gameOver=false;
-const playerSize=50;
+let playerSize = 50;
+let playerX = canvas.width/2 - playerSize/2;
+let playerY = canvas.height - 100;
 
-class Player{
-  constructor(){this.x=canvas.width/2-playerSize/2; this.y=canvas.height-100; this.size=playerSize;}
-  draw(){ctx.fillStyle='red'; ctx.fillRect(this.x,this.y,this.size,this.size);}
-}
+let score = 0;
+let lives = 3;
+let level = 1;
+let gameOver = false;
 
-class Enemy{
-  constructor(){this.size=40; this.x=Math.random()*(canvas.width-40); this.y=-this.size; this.speed=2 + level*0.5;}
+// Gegner
+class Enemy {
+  constructor(){
+    this.size = 40;
+    this.x = Math.random()*(canvas.width - this.size);
+    this.y = -this.size;
+    this.speed = 2 + level*0.5;
+  }
   draw(){ctx.fillStyle='yellow'; ctx.fillRect(this.x,this.y,this.size,this.size);}
   update(){
     this.y += this.speed;
-    if(this.y+this.size >= player.y && this.y <= player.y+player.size &&
-       this.x+this.size >= player.x && this.x <= player.x+player.size){
-         lives--; 
-         this.y=-this.size; this.x=Math.random()*(canvas.width-this.size);
-         if(lives<=0){gameOver=true; restartBtn.style.display='block';}
-       }
-    if(this.y>canvas.height){this.y=-this.size; this.x=Math.random()*(canvas.width-this.size);}
+    // Kollision
+    if(this.y + this.size >= playerY &&
+       this.y <= playerY + playerSize &&
+       this.x + this.size >= playerX &&
+       this.x <= playerX + playerSize){
+      lives--;
+      this.reset();
+      if(lives <= 0){gameOver=true; restartBtn.style.display='block';}
+    }
+    // Reset wenn unten
+    if(this.y > canvas.height) this.reset();
+  }
+  reset(){
+    this.y = -this.size;
+    this.x = Math.random()*(canvas.width - this.size);
   }
 }
 
-let player=new Player();
-let enemies=[];
-function spawnEnemies(){enemies=[]; for(let i=0;i<level+4;i++) enemies.push(new Enemy());}
+let enemies = [];
+function spawnEnemies(){enemies=[]; for(let i=0;i<5;i++) enemies.push(new Enemy());}
 spawnEnemies();
 
-document.addEventListener("mousemove", (e)=>{
-  const rect=canvas.getBoundingClientRect();
-  player.x = Math.min(Math.max(e.clientX - rect.left - player.size/2, 0), canvas.width - player.size);
+// Steuerung
+document.addEventListener('mousemove',(e)=>{
+  const rect = canvas.getBoundingClientRect();
+  playerX = Math.min(Math.max(e.clientX - rect.left - playerSize/2,0), canvas.width-playerSize);
 });
 
+// Restart
 restartBtn.addEventListener('click',()=>{
-  score=0; lives=3; level=1; gameOver=false; spawnEnemies(); restartBtn.style.display='none';
+  score = 0; lives = 3; level = 1; gameOver = false; spawnEnemies(); restartBtn.style.display='none';
 });
 
-toMainBtn.addEventListener('click',()=>{
-  gameSection.style.display='none';
-  mainPage.style.display='block';
-});
-
-backToGame.addEventListener('click',()=>{
-  mainPage.style.display='none';
-  gameSection.style.display='flex';
-});
-
+// Game Loop
 function gameLoop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  player.draw();
+  // Player
+  ctx.fillStyle='red';
+  ctx.fillRect(playerX,playerY,playerSize,playerSize);
+  // Enemies
   enemies.forEach(e=>{e.update(); e.draw();});
-  
-  // Score + Level
+  // Score
   score += 0.01;
-  if(score>=level*20 && level<4){ // bis Level 4
+  // Level up bis 4
+  if(score >= level*20 && level<4){
     level++;
     spawnEnemies();
   }
-  
-  info.textContent=`Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
-  
+  info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
   if(!gameOver) requestAnimationFrame(gameLoop);
 }
+
 gameLoop();
 </script>
 
