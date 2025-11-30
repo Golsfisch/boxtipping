@@ -3,56 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mobile Game mit Krypto-Payment</title>
+<title>BoxTipping - Catch & Pay</title>
 <style>
-body { margin:0; font-family:sans-serif; background:#111; color:#fff; display:flex; flex-direction:column; align-items:center; }
-canvas { border:2px solid #fff; background:#222; touch-action:none; }
-#info { margin:10px; font-size:18px; }
-#payButton { display:none; margin:10px; padding:10px 20px; font-size:16px; cursor:pointer; background:gold; border:none; border-radius:5px; }
+body {
+    margin:0; font-family:sans-serif; background: linear-gradient(160deg, #0f2027, #203a43, #2c5364);
+    color:#fff; display:flex; flex-direction:column; align-items:center; overflow:hidden;
+}
+header { width:100%; text-align:center; padding:15px; background:rgba(0,0,0,0.5); font-size:24px; font-weight:bold; letter-spacing:2px; }
+canvas { border:2px solid #fff; background:#222; touch-action:none; margin-top:10px; border-radius:10px; }
+#info { position:absolute; top:20px; left:10px; font-size:18px; background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:5px; }
+#payButton { display:none; margin-top:15px; padding:12px 25px; font-size:16px; cursor:pointer; background:gold; border:none; border-radius:5px; box-shadow:0 4px 8px rgba(0,0,0,0.3); transition:0.3s; }
+#payButton:hover { background:orange; transform:scale(1.05); }
+footer { position:absolute; bottom:10px; font-size:14px; color:#ccc; text-align:center; width:100%; }
 </style>
 </head>
 <body>
-<h1>Catch the Boxes!</h1>
+<header>BoxTipping</header>
 <div id="info">Score: 0 | Level: 1 | Time: 60</div>
 <button id="payButton">Unlock Level 4 (Pay 0.001 ETH)</button>
 <canvas id="gameCanvas" width="360" height="640"></canvas>
+<footer>Tippe die roten Boxen! Ab Level 4 ist Krypto-Payment nötig.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
 <script>
+// --- Canvas Setup ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const info = document.getElementById('info');
 const payButton = document.getElementById('payButton');
 
-let score = 0;
-let level = 1;
-let timeLeft = 60;
-let gameOver = false;
-let unlocked = false;
+let score=0, level=1, timeLeft=60, gameOver=false, unlocked=false;
 
-// --- Box & Gegner ---
-class Box { constructor(){ this.size=50; this.x=Math.random()*(canvas.width-50); this.y=Math.random()*(canvas.height-50); this.color='red'; } draw(){ ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,this.size,this.size); } respawn(){ this.x=Math.random()*(canvas.width-this.size); this.y=Math.random()*(canvas.height-this.size); } }
-class Enemy { constructor(){ this.size=40; this.x=Math.random()*(canvas.width-40); this.y=-this.size; this.speed=2+Math.random()*level; this.color='orange'; } draw(){ ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,this.size,this.size); } update(){ this.y+=this.speed; if(this.y>canvas.height){ this.y=-this.size; this.x=Math.random()*(canvas.width-this.size); } } }
+// --- Box & Enemy ---
+class Box{constructor(){this.size=50;this.x=Math.random()*(canvas.width-50);this.y=Math.random()*(canvas.height-50);this.color='red';} draw(){ctx.fillStyle=this.color;ctx.fillRect(this.x,this.y,this.size,this.size);} respawn(){this.x=Math.random()*(canvas.width-this.size);this.y=Math.random()*(canvas.height-this.size);}}
+class Enemy{constructor(){this.size=40;this.x=Math.random()*(canvas.width-40);this.y=-this.size;this.speed=2+Math.random()*level;this.color='orange';} draw(){ctx.fillStyle=this.color;ctx.fillRect(this.x,this.y,this.size,this.size);} update(){this.y+=this.speed;if(this.y>canvas.height){this.y=-this.size;this.x=Math.random()*(canvas.width-this.size);}}}
 
-let playerBox = new Box();
-let enemies = [];
+let playerBox=new Box();
+let enemies=[];
 function spawnEnemies(){ enemies=[]; for(let i=0;i<level+2;i++) enemies.push(new Enemy()); }
 spawnEnemies();
 
-// --- Touchsteuerung ---
-canvas.addEventListener('touchstart', e => {
+// --- Touch Event ---
+canvas.addEventListener('touchstart',e=>{
     if(gameOver) return;
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const rect=canvas.getBoundingClientRect();
+    const touch=e.touches[0];
+    const x=touch.clientX-rect.left;
+    const y=touch.clientY-rect.top;
 
     if(x>=playerBox.x && x<=playerBox.x+playerBox.size && y>=playerBox.y && y<=playerBox.y+playerBox.size){
         score++;
         playerBox.respawn();
-        if(score % 5 === 0){
+        if(score%5===0){
             level++;
-            if(level>3 && !unlocked){ // Level 4 Paywall
+            if(level>3 && !unlocked){
                 payButton.style.display='block';
                 return;
             }
@@ -62,31 +66,30 @@ canvas.addEventListener('touchstart', e => {
 });
 
 // --- Timer ---
-const timer = setInterval(()=>{
+const timer=setInterval(()=>{
     if(gameOver) return;
     timeLeft--;
     if(timeLeft<=0){ gameOver=true; alert(`Game Over! Dein Score: ${score}`); clearInterval(timer); }
 },1000);
 
-// --- Krypto-Payment Funktion ---
-async function payForLevel() {
-    if(!window.ethereum){ alert('Wallet nicht gefunden!'); return; }
+// --- Payment via ETH ---
+async function payForLevel(){
+    if(!window.ethereum){ alert('Wallet nicht gefunden! Installiere MetaMask.'); return; }
     try{
         await window.ethereum.request({ method:'eth_requestAccounts' });
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        const tx = await signer.sendTransaction({ to:'0xDeineAdresseHier', value:ethers.parseEther("0.001") });
+        const provider=new ethers.BrowserProvider(window.ethereum);
+        const signer=await provider.getSigner();
+        const tx=await signer.sendTransaction({ to:'0xDeineAdresseHier', value:ethers.parseEther("0.001") });
         await tx.wait();
-        unlocked = true;
+        unlocked=true;
         payButton.style.display='none';
         alert('Level 4 freigeschaltet!');
         spawnEnemies();
     }catch(e){ console.error(e); alert('Payment fehlgeschlagen.'); }
 }
+payButton.addEventListener('click',payForLevel);
 
-payButton.addEventListener('click', payForLevel);
-
-// --- Hauptloop ---
+// --- Main Loop ---
 function gameLoop(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     playerBox.draw();
@@ -94,7 +97,7 @@ function gameLoop(){
         e.update();
         e.draw();
         if(playerBox.x<e.x+e.size && playerBox.x+playerBox.size>e.x && playerBox.y<e.y+e.size && playerBox.y+playerBox.size>e.y){
-            score = Math.max(0,score-1);
+            score=Math.max(0,score-1);
             e.y=-e.size;
         }
     });
