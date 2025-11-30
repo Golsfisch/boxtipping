@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Box's Mysterium</title>
+<title>BoxTipping</title>
 <style>
 body {margin:0;font-family:sans-serif;overflow:hidden;user-select:none;background:#111;color:#fff;}
-header {width:100%;text-align:center;padding:15px;font-size:24px;font-weight:bold;display:flex;justify-content:center;align-items:center;gap:10px;}
+header {width:100%;text-align:center;padding:15px;font-size:24px;font-weight:bold;}
 section {width:100%;height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;position:relative;}
 canvas {border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111;}
 #info {position:absolute;top:20px;left:10px;font-size:18px;background:rgba(0,0,0,0.3);padding:5px 10px;border-radius:5px;}
@@ -22,7 +22,7 @@ canvas {border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111
 </head>
 <body>
 
-<header>Box's Mysterium 😊</header>
+<header>BoxTipping 😊</header>
 <div id="darkModeToggle">Dark Mode</div>
 
 <!-- GAME SECTION -->
@@ -30,7 +30,7 @@ canvas {border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111
 <div id="info">Score: 0 | Lives: 3</div>
 <canvas id="gameCanvas" width="360" height="640"></canvas>
 <div id="weapons">
-  <button id="laserBtn" class="weaponBtn">Gun</button>
+  <button id="laserBtn" class="weaponBtn">Laser</button>
   <button id="bombBtn" class="weaponBtn">Bomb</button>
   <button id="freezeBtn" class="weaponBtn">Freeze</button>
 </div>
@@ -40,7 +40,7 @@ canvas {border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111
 
 <!-- MAIN PAGE -->
 <section id="mainSection">
-<h1>KalaTT</h1>
+<h1>Main Page</h1>
 <div style="display:flex; flex-wrap:wrap; justify-content:center; width:100%; gap:10px; margin-top:20px;">
   <div style="width:45%; height:200px; background:#444; border-radius:10px; display:flex; align-items:center; justify-content:center;">Platzhalter 1</div>
   <div style="width:45%; height:200px; background:#555; border-radius:10px; display:flex; align-items:center; justify-content:center;">Platzhalter 2</div>
@@ -82,13 +82,13 @@ const restartBtn=document.getElementById('restartBtn');
 let score=0, lives=3, gameOver=false;
 const playerSize=50;
 
-// --- PLAYER ---
+// PLAYER
 class Player{
   constructor(){this.x=canvas.width/2-playerSize/2; this.y=canvas.height-100; this.size=playerSize;}
   draw(){ctx.fillStyle='red'; ctx.fillRect(this.x,this.y,this.size,this.size);}
 }
 
-// --- ENEMIES ---
+// ENEMIES
 class Enemy{
   constructor(){this.size=40; this.x=Math.random()*(canvas.width-40); this.y=-this.size; this.speed=2;}
   draw(){ctx.fillStyle='yellow'; ctx.fillRect(this.x,this.y,this.size,this.size);}
@@ -104,84 +104,29 @@ class Enemy{
   }
 }
 
-// --- BULLETS (Gun/Laser) ---
-class Bullet{
-  constructor(x,y){this.x=x; this.y=y; this.radius=5; this.speed=7;}
-  draw(){ctx.fillStyle='red'; ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.fill();}
-  update(){
-    this.y -= this.speed;
-    enemies.forEach((e,i)=>{
-      if(this.x>e.x && this.x<e.x+e.size && this.y>e.y && this.y<e.y+e.size){score++; enemies[i].y=-enemies[i].size; enemies[i].x=Math.random()*(canvas.width-e.size);}
-    });
-  }
-}
-
 let player=new Player();
 let enemies=[];
-let bullets=[];
-let bombs=[];
-
 function spawnEnemies(){enemies=[]; for(let i=0;i<5;i++) enemies.push(new Enemy());}
 spawnEnemies();
 
-// --- WEAPONS ---
-let gunActive=false;
-let gunEndTime=0;
+// BUTTONS PLACEHOLDER
+document.getElementById('laserBtn').addEventListener('click',()=>{console.log('Laser!');});
+document.getElementById('bombBtn').addEventListener('click',()=>{console.log('Bomb!');});
+document.getElementById('freezeBtn').addEventListener('click',()=>{console.log('Freeze!');});
 
-document.getElementById('laserBtn').addEventListener('click',()=>{
-  gunActive=true; gunEndTime=Date.now()+4500; // 4,5 Sekunden Gun aktiv
-});
-
-document.getElementById('bombBtn').addEventListener('click',()=>{
-  let b={x:player.x+player.size/2, y:player.y, radius:15, start:Date.now(), exploded:false};
-  bombs.push(b);
-});
-
-document.getElementById('freezeBtn').addEventListener('click',()=>{
-  enemies.forEach(e=>{e.speed=0;});
-  setTimeout(()=>{enemies.forEach(e=>{e.speed=2;});},3000);
-});
-
-// --- RESTART ---
+// RESTART
 restartBtn.addEventListener('click',()=>{
-  score=0; lives=3; gameOver=false; bullets=[]; bombs=[]; spawnEnemies(); restartBtn.style.display='none';
+  score=0; lives=3; gameOver=false; spawnEnemies(); restartBtn.style.display='none';
 });
 
-// --- GAME LOOP ---
+// GAME LOOP
 function gameLoop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   player.draw();
-
-  // Gun Bullets
-  if(gunActive){
-    if(Date.now()<gunEndTime){bullets.push(new Bullet(player.x+player.size/2,player.y));}
-    else gunActive=false;
-  }
-  bullets.forEach((b,i)=>{b.update(); b.draw(); if(b.y<0) bullets.splice(i,1);});
-
-  // Bombs
-  bombs.forEach((b,i)=>{
-    let elapsed=Date.now()-b.start;
-    ctx.fillStyle='blue'; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill();
-    if(!b.exploded && elapsed>=2000){
-      b.exploded=true;
-      ctx.fillStyle='rgba(0,255,255,0.5)';
-      ctx.beginPath(); ctx.arc(b.x,b.y,canvas.width/3,0,Math.PI*2); ctx.fill();
-      enemies.forEach((e,j)=>{
-        if(Math.abs(e.x+e.size/2-b.x)<canvas.width/3 && Math.abs(e.y+e.size/2-b.y)<canvas.width/3){
-          score++; e.y=-e.size; e.x=Math.random()*(canvas.width-e.size);
-        }
-      });
-      setTimeout(()=>{bombs.splice(i,1);},300);
-    }
-  });
-
   enemies.forEach(e=>{e.update(); e.draw();});
-
   info.textContent=`Score: ${score} | Lives: ${lives}`;
   if(!gameOver) requestAnimationFrame(gameLoop);
 }
-
 gameLoop();
 </script>
 </body>
