@@ -317,9 +317,18 @@ function gameLoop(){
 
   info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
 
-  if (!gameOver) requestAnimationFrame(gameLoop);
+  function gameLoop() {
+
+    // Nur Logik wenn nicht Game Over
+    if (!gameOver) {
+        update();   // ← dein Update (Bewegung, Kollisionen usw.)
+    }
+
+    draw(); // ← dein Draw (Zeichnen der Spieler, Gegner, Bullets usw.)
+
+    // GANZ WICHTIG: Loop NIE stoppen
+    requestAnimationFrame(gameLoop);
 }
-gameLoop();
 </script>
 
 </body>
