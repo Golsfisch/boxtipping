@@ -316,10 +316,14 @@ function gameLoop(){
   }
 
   info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
+function gameLoop() {
+    if(!gameOver){
+        // Bewegung, Kollisionen etc.
+    }
 
-  if (!gameOver) requestAnimationFrame(gameLoop);
+    // Gegner zeichnen, Spieler zeichnen etc.
+    requestAnimationFrame(gameLoop);
 }
-gameLoop();
 </script>
 
 </body>
