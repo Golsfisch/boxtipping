@@ -74,11 +74,8 @@ canvas {
 <button id="restartBtn">Restart</button>
 <button id="payBtn">Freischalten (0.0001 ETH)</button>
 <button id="connectBtn">Wallet verbinden</button>
-<button id="menuBtn">Weiter zum Menü</button>
+
 <script>
-  document.getElementById("menuBtn").addEventListener("click", () => {
-    window.location.href = "seite3.html";
-});
 // === CANVAS SETUP ==================================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -323,15 +320,7 @@ function gameLoop(){
   if (!gameOver) requestAnimationFrame(gameLoop);
 }
 gameLoop();
-
-<script>
-document.getElementById("restartBtn").addEventListener("click", () => {
-    // HARD RESET der gesamten Seite
-    window.location.reload();
-});
-
 </script>
-
 
 </body>
 </html>
