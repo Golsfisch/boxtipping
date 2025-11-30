@@ -3,141 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BoxTipping - Krypto Mobile Game</title>
+<title>BoxTipping - Level 4</title>
 <style>
-body {margin:0; font-family:sans-serif; background:#0b0b0b; color:#fff; display:flex; flex-direction:column; align-items:center; overflow:hidden;}
-header {width:100%; text-align:center; padding:15px; background:rgba(0,0,0,0.5); font-size:24px; font-weight:bold; letter-spacing:2px;}
-canvas {border:2px solid #fff; background:#111; touch-action:none; margin-top:10px; border-radius:10px;}
-#info {position:absolute; top:20px; left:10px; font-size:18px; background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:5px;}
-#payButton {display:none; margin-top:15px; padding:12px 25px; font-size:16px; cursor:pointer; background:gold; border:none; border-radius:5px; box-shadow:0 4px 8px rgba(0,0,0,0.3); transition:0.3s;}
-#payButton:hover {background:orange; transform:scale(1.05);}
-#powerups {position:absolute; top:20px; right:10px; display:flex; gap:5px;}
-.powerup {width:30px; height:30px; background:lime; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:18px;}
-#weapons {position:absolute; bottom:20px; right:10px; display:flex; gap:5px;}
-.weaponBtn {padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;}
-#laserBtn {background:red; color:#fff;}
-#bombBtn {background:orange; color:#000;}
-#freezeBtn {background:cyan; color:#000;}
-footer {position:absolute; bottom:10px; font-size:14px; color:#ccc; text-align:center; width:100%;}
+body {margin:0;font-family:sans-serif;overflow:hidden;user-select:none;background:#111;color:#fff;}
+header {width:100%;text-align:center;padding:15px;font-size:24px;font-weight:bold;}
+section {width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
+canvas {border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111;}
+#info {position:absolute;top:20px;left:10px;font-size:18px;background:rgba(0,0,0,0.3);padding:5px 10px;border-radius:5px;}
+#restartBtn {position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;padding:10px 20px;background:lime;color:#000;border:none;border-radius:5px;cursor:pointer;}
+#toMainBtn {position:absolute;top:60px;left:50%;transform:translateX(-50%);padding:8px 12px;border-radius:5px;background:#888;color:#fff;border:none;cursor:pointer;}
+#mainPage {display:none;padding:20px;}
 </style>
 </head>
 <body>
-<header>BoxTipping</header>
-<div id="info">Score: 0 | Level: 1 | Time: 60</div>
-<div id="powerups"></div>
-<button id="payButton">Unlock Level 4 (Pay 0.001 ETH)</button>
-<canvas id="gameCanvas" width="360" height="640"></canvas>
-<div id="weapons">
-    <button id="laserBtn" class="weaponBtn">Laser</button>
-    <button id="bombBtn" class="weaponBtn">Bomb</button>
-    <button id="freezeBtn" class="weaponBtn">Freeze</button>
-</div>
-<footer>Tippe die roten Boxen! Power-Ups & Waffen helfen dir! Ab Level 4 Krypto-Payment nötig.</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
+<header>BoxTipping 😊</header>
+
+<!-- GAME SECTION -->
+<section id="gameSection">
+<div id="info">Score: 0 | Lives: 3 | Level: 1</div>
+<canvas id="gameCanvas" width="360" height="640"></canvas>
+<button id="restartBtn">Restart</button>
+<button id="toMainBtn">Weiter zur Main Page</button>
+</section>
+
+<!-- MAIN PAGE -->
+<section id="mainPage">
+<h1>Main Page</h1>
+<p>Hier geht es später weiter mit Krypto-Zahlungen, Guthaben usw.</p>
+<button id="backToGame" style="margin-top:20px;padding:8px 12px;border-radius:5px;background:#888;color:#fff;border:none;cursor:pointer;">Back to Game</button>
+</section>
+
 <script>
-// --- Setup ---
 const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
 const info=document.getElementById('info');
-const payButton=document.getElementById('payButton');
-const powerupDiv=document.getElementById('powerups');
+const restartBtn=document.getElementById('restartBtn');
+const gameSection=document.getElementById('gameSection');
+const mainPage=document.getElementById('mainPage');
+const toMainBtn=document.getElementById('toMainBtn');
+const backToGame=document.getElementById('backToGame');
 
-let score=0, level=1, timeLeft=60, gameOver=false, unlocked=false;
-let activePowerups={};
-let weaponCooldowns={laser:0,bomb:0,freeze:0};
-const weaponCooldownTime={laser:1000,bomb:5000,freeze:8000};
+let score=0, lives=3, level=1, gameOver=false;
+const playerSize=50;
 
-// --- Box & Enemy ---
-class Box{constructor(){this.size=50;this.x=Math.random()*(canvas.width-50);this.y=Math.random()*(canvas.height-50);this.color='red';} draw(){ctx.fillStyle=this.color;ctx.fillRect(this.x,this.y,this.size,this.size);} respawn(){this.x=Math.random()*(canvas.width-this.size);this.y=Math.random()*(canvas.height-this.size); spawnPowerup();}}
-class Enemy{constructor(){this.size=40;this.x=Math.random()*(canvas.width-40);this.y=-this.size;this.speed=2+Math.random()*level;this.color='orange'; this.frozen=false;} draw(){ctx.fillStyle=this.color;ctx.fillRect(this.x,this.y,this.size,this.size);} update(){if(!this.frozen){let speedFactor=activePowerups.speedBoost?0.5:1; this.y+=this.speed*speedFactor; if(this.y>canvas.height){ this.y=-this.size; this.x=Math.random()*(canvas.width-this.size);}}}}
+class Player{
+  constructor(){this.x=canvas.width/2-playerSize/2; this.y=canvas.height-100; this.size=playerSize;}
+  draw(){ctx.fillStyle='red'; ctx.fillRect(this.x,this.y,this.size,this.size);}
+}
 
-let playerBox=new Box();
+class Enemy{
+  constructor(){this.size=40; this.x=Math.random()*(canvas.width-40); this.y=-this.size; this.speed=2 + level*0.5;}
+  draw(){ctx.fillStyle='yellow'; ctx.fillRect(this.x,this.y,this.size,this.size);}
+  update(){
+    this.y += this.speed;
+    if(this.y+this.size >= player.y && this.y <= player.y+player.size &&
+       this.x+this.size >= player.x && this.x <= player.x+player.size){
+         lives--; 
+         this.y=-this.size; this.x=Math.random()*(canvas.width-this.size);
+         if(lives<=0){gameOver=true; restartBtn.style.display='block';}
+       }
+    if(this.y>canvas.height){this.y=-this.size; this.x=Math.random()*(canvas.width-this.size);}
+  }
+}
+
+let player=new Player();
 let enemies=[];
-function spawnEnemies(){ enemies=[]; for(let i=0;i<level+2;i++) enemies.push(new Enemy()); }
+function spawnEnemies(){enemies=[]; for(let i=0;i<level+4;i++) enemies.push(new Enemy());}
 spawnEnemies();
 
-// --- Power-Ups ---
-const powerupTypes=['speedBoost','scoreX2','extraTime'];
-function spawnPowerup(){ if(Math.random()<0.2){const type=powerupTypes[Math.floor(Math.random()*powerupTypes.length)]; activePowerups[type]=type==='extraTime'?true:Date.now()+10000; if(type==='extraTime') timeLeft+=10; renderPowerups();}}
-function renderPowerups(){ powerupDiv.innerHTML=''; for(let p in activePowerups){ const div=document.createElement('div'); div.className='powerup'; div.textContent=p==='speedBoost'?'S':p==='scoreX2'?'x2':'T'; powerupDiv.appendChild(div);}}
-
-// --- Touch Event ---
-canvas.addEventListener('touchstart',e=>{
-    if(gameOver) return;
-    const rect=canvas.getBoundingClientRect();
-    const touch=e.touches[0];
-    const x=touch.clientX-rect.left;
-    const y=touch.clientY-rect.top;
-
-    if(x>=playerBox.x && x<=playerBox.x+playerBox.size && y>=playerBox.y && y<=playerBox.y+playerBox.size){
-        let points=activePowerups.scoreX2?2:1;
-        score+=points;
-        playerBox.respawn();
-        if(score%5===0){ level++; if(level>3 && !unlocked){ payButton.style.display='block'; return; } spawnEnemies();}
-    }
+document.addEventListener("mousemove", (e)=>{
+  const rect=canvas.getBoundingClientRect();
+  player.x = Math.min(Math.max(e.clientX - rect.left - player.size/2, 0), canvas.width - player.size);
 });
 
-// --- Timer ---
-const timer=setInterval(()=>{ if(gameOver) return; timeLeft--; if(timeLeft<=0){ gameOver=true; alert(`Game Over! Dein Score: ${score}`); clearInterval(timer); } },1000);
+restartBtn.addEventListener('click',()=>{
+  score=0; lives=3; level=1; gameOver=false; spawnEnemies(); restartBtn.style.display='none';
+});
 
-// --- Krypto Payment ---
-async function payForLevel(){ 
-    if(!window.ethereum){ alert('Wallet nicht gefunden! Installiere MetaMask.'); return; } 
-    try{ 
-        await window.ethereum.request({ method:'eth_requestAccounts' }); 
-        const provider=new ethers.BrowserProvider(window.ethereum); 
-        const signer=await provider.getSigner(); 
-        const tx=await signer.sendTransaction({ to:'0xDeineAdresseHier', value:ethers.parseEther("0.001") }); 
-        await tx.wait(); 
-        unlocked=true; 
-        payButton.style.display='none'; 
-        alert('Level 4 freigeschaltet!'); 
-        spawnEnemies();
-    }catch(e){ console.error(e); alert('Payment fehlgeschlagen.');}
-}
-payButton.addEventListener('click',payForLevel);
+toMainBtn.addEventListener('click',()=>{
+  gameSection.style.display='none';
+  mainPage.style.display='block';
+});
 
-// --- Waffen ---
-function useWeapon(type){ const now=Date.now(); if(now<weaponCooldowns[type]) return; weaponCooldowns[type]=now+weaponCooldownTime[type];
-    if(type==='laser'){ enemies.forEach(e=>{ if(e.x+e.size/2>playerBox.x && e.x+e.size/2<playerBox.x+playerBox.size){ e.y=-e.size; score++; }});}
-    else if(type==='bomb'){ enemies.forEach(e=>{ const dx=(playerBox.x+playerBox.size/2)-(e.x+e.size/2); const dy=(playerBox.y+playerBox.size/2)-(e.y+e.size/2); const dist=Math.sqrt(dx*dx+dy*dy); if(dist<100){ e.y=-e.size; score++; }});}
-    else if(type==='freeze'){ enemies.forEach(e=>{ e.frozen=true; }); setTimeout(()=>{ enemies.forEach(e=>{ e.frozen=false; }); },3000);}
-}
-document.getElementById('laserBtn').addEventListener('click',()=>useWeapon('laser'));
-document.getElementById('bombBtn').addEventListener('click',()=>useWeapon('bomb'));
-document.getElementById('freezeBtn').addEventListener('click',()=>useWeapon('freeze'));
+backToGame.addEventListener('click',()=>{
+  mainPage.style.display='none';
+  gameSection.style.display='flex';
+});
 
-// --- Main Loop ---
 function gameLoop(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // --- Hintergrund Animation ---
-    for(let i=0;i<50;i++){ ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fillRect(Math.random()*canvas.width,Math.random()*canvas.height,2,2); }
-
-    playerBox.draw();
-    enemies.forEach(e=>{ e.update(); e.draw(); if(playerBox.x<e.x+e.size && playerBox.x+playerBox.size>e.x && playerBox.y<e.y+e.size && playerBox.y+playerBox.size>e.y){ score=Math.max(0,score-1); e.y=-e.size; }});
-
-    // --- Power-Ups Timeout ---
-    const now=Date.now();
-    for(let p in activePowerups){ if(activePowerups[p]!==true && now>activePowerups[p]) delete activePowerups[p]; }
-    renderPowerups();
-
-    info.textContent=`Score: ${score} | Level: ${level} | Time: ${timeLeft}`;
-    if(!gameOver && (level<=3 || unlocked)) requestAnimationFrame(gameLoop);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  player.draw();
+  enemies.forEach(e=>{e.update(); e.draw();});
+  
+  // Score + Level
+  score += 0.01;
+  if(score>=level*20 && level<4){ // bis Level 4
+    level++;
+    spawnEnemies();
+  }
+  
+  info.textContent=`Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
+  
+  if(!gameOver) requestAnimationFrame(gameLoop);
 }
 gameLoop();
-
-// --- Highscore Sign ---
-async function submitHighscore(){
-    if(!window.ethereum){ alert('Wallet nicht gefunden!'); return; }
-    const provider=new ethers.BrowserProvider(window.ethereum);
-    const signer=await provider.getSigner();
-    const message=`BoxTipping Highscore:${score}`;
-    const signature=await signer.signMessage(message);
-    localStorage.setItem('highscoreSignature',signature);
-    alert('Highscore signiert & gespeichert!');
-}
 </script>
+
 </body>
 </html>
