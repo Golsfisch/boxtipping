@@ -2,62 +2,33 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>BoxTipping Ultimate Full Version</title>
-
+<title>BoxTipping Prototype</title>
 <style>
-body {
-    margin:0;
-    background:#111;
-    color:white;
-    font-family:Arial;
-    text-align:center;
-    overflow:hidden;
-}
-canvas {
-    display:block;
-    margin:20px auto;
-    background:#222;
-    border:3px solid #555;
-}
-button {
-    padding:10px 20px;
-    font-size:16px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    margin:4px;
-}
-#restartBtn {
-    display:none;
-    background:#c40000;
-    color:white;
-    position:absolute;
-    top:20px;
-    left:20px;
-}
-#menuBtn {
-    background:#444;
-    color:white;
-    position:absolute;
-    top:20px;
-    left:150px;
-}
+body { margin:0; background:#111; font-family:Arial; color:white; text-align:center; overflow:hidden;}
+canvas { display:block; margin:20px auto; background:#222; border:2px solid #555;}
+button { padding:10px 20px; font-size:16px; margin:5px; border:none; border-radius:5px; cursor:pointer;}
+#restartBtn { background:#f00; color:white; display:none; position:absolute; top:10px; left:10px; z-index:100;}
+#menuBtn { background:#444; color:white; position:absolute; top:10px; left:150px; z-index:100;}
+#menuContent { display:none; position:absolute; top:40px; left:10px; background:#333; padding:10px; border-radius:5px; text-align:left; }
+#menuContent a { display:block; color:white; text-decoration:none; padding:5px 0; }
+#menuContent a:hover { background:#555; }
 </style>
 </head>
-
 <body>
 
-<h1>BoxTipping ULTIMATE – Full Version</h1>
-
+<h1>BoxTipping Prototype</h1>
 <canvas id="game" width="400" height="600"></canvas>
 
 <button id="restartBtn">Restart</button>
 <button id="menuBtn">Menü</button>
 
+<div id="menuContent">
+  <a href="seite2.html">BoxTipping V2</a>
+  <a href="#">Option 2</a>
+</div>
+
 <script>
-// =========================================================
-// VARIABLEN
-// =========================================================
+// ==================== VARIABLEN ====================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -65,12 +36,9 @@ let score, lives, level, gameRunning, payUnlocked;
 let enemies, bullets, powerups, weapons;
 let boss = null;
 
-// Spieler
 const player = { x:180, y:550, w:40, h:40, speed:6 };
 
-// =========================================================
-// SPIEL ZURÜCKSETZEN (WICHTIG FÜR RESTART)
-// =========================================================
+// ==================== RESET / RESTART ====================
 function resetGame() {
     score = 0;
     lives = 3;
@@ -90,37 +58,32 @@ function resetGame() {
     restartBtn.style.display = "none";
 }
 
-// =========================================================
-// GEGENERSPAWN
-// =========================================================
+// ==================== SPAWN ====================
 function spawnEnemy() {
     enemies.push({
-        x: Math.random() * (canvas.width - 40),
+        x: Math.random()*(canvas.width-40),
         y: -40,
-        w: 40,
-        h: 40,
-        speed: 2 + Math.random() * level * 0.5
+        w:40,
+        h:40,
+        speed: 2 + Math.random()*level*0.5
     });
 }
 
-// Boss
 function spawnBoss() {
     boss = {
-        x: canvas.width/2 - 60,
+        x: canvas.width/2-60,
         y: -120,
         w:120,
         h:80,
-        speed: 1 + level * 0.2,
-        hp: 20 + level * 6
+        speed:1 + level*0.2,
+        hp: 20 + level*6
     };
 }
 
-// =========================================================
-// SCHIESSEN
-// =========================================================
+// ==================== SHOOT ====================
 function shootBullet() {
     bullets.push({
-        x: player.x + player.w/2 - 4,
+        x: player.x+player.w/2-4,
         y: player.y,
         w:8,
         h:12,
@@ -128,171 +91,126 @@ function shootBullet() {
     });
 }
 
-// =========================================================
-// GAME LOOP
-// =========================================================
+// ==================== GAME LOOP ====================
 function gameLoop() {
     requestAnimationFrame(gameLoop);
 
-    if (!gameRunning) return;
+    if(!gameRunning) return;
 
-    // Hintergrund
-    ctx.fillStyle = "#222";
+    ctx.fillStyle="#222";
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // Spieler
-    ctx.fillStyle = "red";
-    ctx.fillRect(player.x, player.y, player.w, player.h);
+    ctx.fillStyle="red";
+    ctx.fillRect(player.x,player.y,player.w,player.h);
 
-    // =====================================================
     // BULLETS
-    // =====================================================
-    for (let i = bullets.length -1; i >= 0; i--) {
-        let b = bullets[i];
+    for(let i=bullets.length-1;i>=0;i--){
+        let b=bullets[i];
         b.y -= b.speed;
-
         ctx.fillStyle="cyan";
         ctx.fillRect(b.x,b.y,b.w,b.h);
-
-        if (b.y < -10) bullets.splice(i,1);
+        if(b.y<-10) bullets.splice(i,1);
     }
 
-    // =====================================================
-    // BOSSKAMPF
-    // =====================================================
-    if (level >= 5 && !boss) spawnBoss();
+    // GEGNER
+    for(let i=enemies.length-1;i>=0;i--){
+        let e=enemies[i];
+        e.y += e.speed;
+        ctx.fillStyle="yellow";
+        ctx.fillRect(e.x,e.y,e.w,e.h);
 
-    if (boss) {
+        // Treffer durch Bullet
+        for(let j=bullets.length-1;j>=0;j--){
+            let b=bullets[j];
+            if(b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y){
+                enemies.splice(i,1);
+                bullets.splice(j,1);
+                score +=10;
+                break;
+            }
+        }
+
+        // Gegner trifft Spieler
+        if(e.y + e.h >= player.y && e.x < player.x + player.w && e.x + e.w > player.x){
+            enemies.splice(i,1);
+            lives--;
+        }
+
+        if(e.y>canvas.height) enemies.splice(i,1);
+    }
+
+    if(enemies.length < 3 + level) spawnEnemy();
+
+    // BOSS
+    if(level>=5 && !boss) spawnBoss();
+    if(boss){
         boss.y += boss.speed;
-        ctx.fillStyle = "purple";
-        ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+        ctx.fillStyle="purple";
+        ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
 
-        // Bullet trifft Boss
-        for (let i = bullets.length-1; i>=0; i--) {
-            let b = bullets[i];
-            if (b.x < boss.x + boss.w &&
-                b.x + b.w > boss.x &&
-                b.y < boss.y + boss.h &&
-                b.y + b.h > boss.y) {
-
+        // Treffer Boss
+        for(let i=bullets.length-1;i>=0;i--){
+            let b=bullets[i];
+            if(b.x < boss.x+boss.w && b.x+b.w > boss.x && b.y<boss.y+boss.h && b.y+b.h>boss.y){
                 bullets.splice(i,1);
                 boss.hp--;
-
-                if (boss.hp <= 0) {
-                    boss = null;
+                if(boss.hp<=0){
+                    boss=null;
                     level++;
-                    score +=100;
+                    score+=100;
                 }
             }
         }
 
         // Boss trifft Spieler
-        if (boss.y + boss.h >= player.y &&
-            boss.x < player.x + player.w &&
-            boss.x + boss.w > player.x) {
-
-            lives = 0;
+        if(boss.y+boss.h>=player.y && boss.x<player.x+player.w && boss.x+boss.w>player.x){
+            lives=0;
         }
     }
 
-    // =====================================================
-    // GEGNER
-    // =====================================================
-    for (let i = enemies.length -1; i >= 0; i--) {
-        let e = enemies[i];
-        e.y += e.speed;
-
-        ctx.fillStyle="yellow";
-        ctx.fillRect(e.x,e.y,e.w,e.h);
-
-        // Treffer durch Bullet
-        for (let j=bullets.length-1; j>=0; j--) {
-            let b = bullets[j];
-            if (b.x < e.x + e.w &&
-                b.x + b.w > e.x &&
-                b.y < e.y + e.h &&
-                b.y + b.h > e.y) {
-                    enemies.splice(i,1);
-                    bullets.splice(j,1);
-                    score += 10;
-                    break;
-            }
-        }
-
-        // Gegner trifft Spieler
-        if (e.y + e.h >= player.y &&
-            e.x < player.x + player.w &&
-            e.x + e.w > player.x) {
-
-            enemies.splice(i,1);
-            lives--;
-        }
-
-        if (e.y > canvas.height) enemies.splice(i,1);
-    }
-
-    // Wenn zu wenige Gegner existieren → neue
-    if (enemies.length < 3 + level) spawnEnemy();
-
-    // =====================================================
-    // UI AUSGABE
-    // =====================================================
+    // UI
     ctx.fillStyle="white";
-    ctx.fillText("Score: " + score, 10,20);
-    ctx.fillText("Level: " + level, 10,40);
-    ctx.fillText("Lives: " + lives, 10,60);
+    ctx.fillText("Score: "+score,10,20);
+    ctx.fillText("Level: "+level,10,40);
+    ctx.fillText("Lives: "+lives,10,60);
 
-    // =====================================================
-    // PAYWALL LEVEL 4
-    // =====================================================
-    if (level >= 4 && !payUnlocked) {
-        gameRunning = false;
-        alert("PAYWALL: Zahlung nötig, um weiterzuspielen! (Simuliert)");
-        payUnlocked = true;
-        gameRunning = true;
+    // PAYWALL ab Level 4
+    if(level>=4 && !payUnlocked){
+        gameRunning=false;
+        alert("PAYWALL: Zahlung nötig!");
+        payUnlocked=true;
+        gameRunning=true;
     }
 
-    // =====================================================
-    // GAME OVER
-    // =====================================================
-    if (lives <= 0) {
-        gameRunning = false;
-        restartBtn.style.display = "block";
+    if(lives<=0){
+        gameRunning=false;
+        restartBtn.style.display="block";
     }
 }
 
-// =========================================================
-// EVENTLISTENER
-// =========================================================
-document.addEventListener("keydown", (e)=>{
-    if (e.key === "ArrowLeft") player.x -= player.speed;
-    if (e.key === "ArrowRight") player.x += player.speed;
-    if (e.key === " ") shootBullet();
-
-    if (player.x < 0) player.x = 0;
-    if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+// ==================== EVENTLISTENER ====================
+document.addEventListener("keydown",(e)=>{
+    if(e.key==="ArrowLeft") player.x-=player.speed;
+    if(e.key==="ArrowRight") player.x+=player.speed;
+    if(e.key===" ") shootBullet();
+    if(player.x<0) player.x=0;
+    if(player.x+player.w>canvas.width) player.x=canvas.width-player.w;
 });
 
-// =========================================================
 // RESTART BUTTON
-// =========================================================
-restartBtn.addEventListener("click", ()=>{
-    resetGame();
-});
+const restartBtn = document.getElementById("restartBtn");
+restartBtn.addEventListener("click", ()=>{ resetGame(); });
 
-// =========================================================
 // MENÜ BUTTON
-// =========================================================
+const menuBtn = document.getElementById("menuBtn");
+const menuContent = document.getElementById("menuContent");
 menuBtn.addEventListener("click", ()=>{
-    window.location.href = "seite2.html";
+    menuContent.style.display = menuContent.style.display==="block" ? "none" : "block";
 });
 
-// =========================================================
-// SPIEL STARTEN
-// =========================================================
+// ==================== START ====================
 resetGame();
 gameLoop();
-
 </script>
 </body>
 </html>
