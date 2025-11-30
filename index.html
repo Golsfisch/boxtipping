@@ -101,25 +101,6 @@ let player = {
   gunTimer: 0
 };
 
-  const restartBtn = document.getElementById("restartBtn");
-
-restartBtn.addEventListener("click", () => {
-    // === Zurücksetzen, alles außer Score, Level, Payment ===
-    lives = 3;                                // Leben zurücksetzen
-    player.x = canvas.width/2 - player.size/2; // Spielerposition horizontal
-    player.y = canvas.height - 120;          // Spielerposition vertikal
-
-    enemies.forEach(e => e.reset ? e.reset() : null); // Gegner zurücksetzen, falls reset vorhanden
-    powerups = [];                             // Powerups zurücksetzen
-    bullets = [];                              // Geschosse zurücksetzen
-
-    gameOver = false;                          // Spielstatus zurücksetzen
-    restartBtn.style.display = "none";        // Button ausblenden
-
-    // Anzeige aktualisieren
-    info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
-});
-
 // === ENEMY CLASS ====================================
 class Enemy {
   constructor() {
