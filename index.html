@@ -273,69 +273,53 @@ restartBtn.onclick = ()=> {
   restartBtn.style.display="none";
 };
 
-// === GAME LOOP =======================================
-  // ------------------------------
-// SICHERER GAME LOOP
-// ------------------------------
-let gameLoopID;
-let gameRunning = true; // steuert, ob Update/Draw ausgeführt werden
+// === GAME LOOP ======================================
+spawnEnemies();
 
-function gameLoop() {
-    gameLoopID = requestAnimationFrame(gameLoop); // Loop läuft immer
+function gameLoop(){
+  ctx.clearRect(0,0,400,700);
 
-    if (!gameRunning) return; // Logik pausieren, Loop bleibt aktiv
+  drawStars();
 
-    update(); // dein bestehendes Update
-    draw();   // dein bestehendes Draw
+  ctx.fillStyle = "red";
+  ctx.fillRect(player.x, player.y, player.size, player.size);
+
+  enemies.forEach(e=>{ e.update(); e.draw(); });
+
+  if (player.gunActive) {
+    player.gunTimer--;
+    if (player.gunTimer % 10 === 0)
+      bullets.push(new Bullet(player.x+player.size/2, player.y));
+    if (player.gunTimer <= 0) player.gunActive = false;
+  }
+
+  bullets.forEach(b=>b.update());
+  bullets = bullets.filter(b=>!b.dead);
+  bullets.forEach(b=>b.draw());
+
+  if (Math.random() < 0.003 && level < 4)
+    powerups.push(new Powerup("gun"));
+  powerups.forEach(p=>p.update());
+  powerups = powerups.filter(p=>!p.dead);
+  powerups.forEach(p=>p.draw());
+
+  score += 0.05;
+
+  if (score > level * 50 && level < 4 && !gameOver) {
+    level++;
+    spawnEnemies();
+  }
+
+  if (level >= 4 && !payUnlocked) {
+    payBtn.style.display="block";
+    gameOver = true;
+  }
+
+  info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
+
+  if (!gameOver) requestAnimationFrame(gameLoop);
 }
-
-// ------------------------------
-// GAME OVER
-// ------------------------------
-function endGame() {
-    gameRunning = false; // pausiert Logik
-    document.getElementById("restartBtn").style.display = "block"; // Restart zeigen
-}
-
-// ------------------------------
-// RESTART BUTTON
-// ------------------------------
-document.getElementById("restartBtn").addEventListener("click", () => {
-    // 1️⃣ Variablen zurücksetzen
-    lives = 3;
-    gameOver = false;
-    gameRunning = true;
-
-    // Score/Level nach Paywall-Logik behalten oder zurücksetzen
-    score = 0;    // wenn Score komplett zurückgesetzt werden soll
-    level = 1;    // falls Level auf 1 zurück
-
-    document.getElementById("score").textContent = score;
-    document.getElementById("lives").textContent = lives;
-    document.getElementById("level").textContent = level;
-
-    // 2️⃣ Spieler zurücksetzen
-    player.x = canvas.width / 2 - player.size / 2;
-    player.y = canvas.height - 120;
-
-    // 3️⃣ Gegner, Bullets, Powerups löschen
-    enemies = [];
-    bullets = [];
-    powerups = [];
-
-    // 4️⃣ Buttons ausblenden
-    restartBtn.style.display = "none";
-
-    // 5️⃣ Gegner neu spawnen, falls Funktion existiert
-    if (typeof spawnEnemies === "function") spawnEnemies();
-
-    // 6️⃣ Game Loop läuft weiter automatisch, kein RequestAnimationFrame neu nötig
-});
-
-// ------------------------------
-// GAME START
-// ------------------------------
-gameLoop(); // einmal beim Laden starten
+gameLoop();
 </script>
 
 </body>
