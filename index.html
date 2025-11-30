@@ -76,6 +76,28 @@ canvas {
 <button id="connectBtn">Wallet verbinden</button>
 
 <script>
+
+document.getElementById("restartBtn").addEventListener("click", () => {
+    // Variablen resetten
+    score = 0;
+    lives = 3;
+    level = 1;
+    gameOver = false;
+    gameRunning = true;
+
+    // Spieler und Gegner zurücksetzen
+    player.x = canvas.width/2 - player.size/2;
+    player.y = canvas.height - 120;
+    enemies = [];
+    bullets = [];
+    powerups = [];
+
+    // Buttons verstecken
+    document.getElementById("restartBtn").style.display = "none";
+
+    // Game Loop NICHT neu starten – läuft ja schon
+});
+  
 // === CANVAS SETUP ==================================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -260,7 +282,10 @@ payBtn.onclick = async ()=> {
 // === GAME END =======================================
 function endGame() {
   gameOver = true;
-  restartBtn.style.display = "block";
+  
+
+ document.getElementById("restartBtn").style.display = "block";
+gameRunning = false; // nur Logik anhalten, Loop läuft weiter 
 }
 
 // === RESTART ========================================
@@ -276,8 +301,14 @@ restartBtn.onclick = ()=> {
 // === GAME LOOP ======================================
 spawnEnemies();
 
-function gameLoop(){
-  requestAnimationFrame(gameLoop);
+function gameLoop() {
+    requestAnimationFrame(gameLoop); // Loop läuft IMMER
+
+    if (!gameRunning) return;        // Nur Logik stoppen, nicht Loop
+
+    update(); // deine Spiel-Logik
+    draw();   // deine Darstellung
+
   ctx.clearRect(0,0,400,700);
 
   drawStars();
