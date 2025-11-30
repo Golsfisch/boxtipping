@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BoxTipping</title>
 <style>
-body {margin:0; font-family:sans-serif; background:#0b0b0b; color:#fff; overflow:hidden; display:flex; flex-direction:column; align-items:center; user-select:none; -webkit-user-select:none; -moz-user-select:none;}
-header {width:100%; text-align:center; padding:15px; background:rgba(0,0,0,0.5); font-size:24px; font-weight:bold; letter-spacing:2px;}
-section {width:100%; height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; position:relative;}
-canvas {border:2px solid #fff; background:#111; touch-action:none; border-radius:10px; margin-top:10px;}
-#info {position:absolute; top:20px; left:10px; font-size:18px; background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:5px;}
+body {margin:0; font-family:sans-serif; color:#fff; overflow:hidden; display:flex; flex-direction:column; align-items:center; user-select:none; -webkit-user-select:none; -moz-user-select:none; transition: background 0.3s, color 0.3s;}
+header {width:100%; text-align:center; padding:15px; font-size:24px; font-weight:bold; letter-spacing:2px; transition: background 0.3s, color 0.3s;}
+section {width:100%; height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; position:relative; transition: background 0.3s, color 0.3s;}
+canvas {border:2px solid #fff; touch-action:none; border-radius:10px; margin-top:10px; background:#111; transition: background 0.3s;}
+#info {position:absolute; top:20px; left:10px; font-size:18px; background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:5px; transition: background 0.3s, color 0.3s;}
 #powerups {position:absolute; top:20px; right:10px; display:flex; gap:5px;}
 .powerup {width:30px; height:30px; background:lime; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:18px;}
 #weapons {position:absolute; bottom:80px; right:10px; display:flex; gap:5px;}
@@ -17,16 +17,28 @@ canvas {border:2px solid #fff; background:#111; touch-action:none; border-radius
 #laserBtn {background:red; color:#fff;}
 #bombBtn {background:orange; color:#000;}
 #freezeBtn {background:cyan; color:#000;}
-button {padding:12px 25px; font-size:16px; border:none; border-radius:5px; cursor:pointer; margin:5px;}
+button {padding:12px 25px; font-size:16px; border:none; border-radius:5px; cursor:pointer; margin:5px; transition: background 0.3s, color 0.3s;}
 #toMainPage {background:blue; color:#fff; position:absolute; bottom:20px; left:50%; transform:translateX(-50%);}
-#payMainPage {background:gold; color:#000; margin-top:20px;}
+#payMainPage {background:gold; color:#000; margin-top:20px; display:none;}
 #brand {position:absolute; bottom:10px; left:10px; font-size:14px; color:#888;}
 #restartBtn {background:lime; color:#000; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:none;}
+#darkModeToggle {position:absolute; top:20px; right:20px; padding:8px 12px; border-radius:5px; background:#555; color:#fff; cursor:pointer; z-index:1000;}
+/* Dark & Light Mode */
+body.light {background:#f5f5f5; color:#000;}
+body.light header {background:#ddd; color:#000;}
+body.light section {background:#fff; color:#000;}
+body.light canvas {background:#eee;}
+body.light button {color:#000;}
+body.dark {background:#0b0b0b; color:#fff;}
+body.dark header {background:rgba(0,0,0,0.5); color:#fff;}
+body.dark section {background:#111; color:#fff;}
+body.dark canvas {background:#111;}
 </style>
 </head>
-<body>
+<body class="dark">
 
 <header>BoxTipping</header>
+<div id="darkModeToggle">Dark Mode</div>
 
 <!-- --- GAME SECTION --- -->
 <section id="gameSection" style="display:flex;">
@@ -52,7 +64,6 @@ button {padding:12px 25px; font-size:16px; border:none; border-radius:5px; curso
 <div id="brand">@thesafe</div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
 <script>
 // ------------------- PAGE SWITCH -------------------
 const gameSection = document.getElementById('gameSection');
@@ -66,6 +77,24 @@ document.getElementById('backToGame').addEventListener('click', ()=>{
     gameSection.style.display='flex';
 });
 
+// ------------------- DARK MODE -------------------
+const darkToggle=document.getElementById('darkModeToggle');
+let darkMode=localStorage.getItem('darkMode')||'dark';
+document.body.className=darkMode;
+darkToggle.textContent = darkMode==='dark'?'Dark Mode':'Light Mode';
+
+darkToggle.addEventListener('click',()=>{
+    if(document.body.classList.contains('dark')){
+        document.body.classList.remove('dark'); document.body.classList.add('light');
+        darkToggle.textContent='Light Mode';
+        localStorage.setItem('darkMode','light');
+    }else{
+        document.body.classList.remove('light'); document.body.classList.add('dark');
+        darkToggle.textContent='Dark Mode';
+        localStorage.setItem('darkMode','dark');
+    }
+});
+
 // ------------------- GAME SETUP -------------------
 const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
@@ -76,88 +105,56 @@ const restartBtn=document.getElementById('restartBtn');
 let score=0, level=1, timeLeft=60, gameOver=false, lives=3, unlocked=false;
 let activePowerups={}, weaponCooldowns={laser:0,bomb:0,freeze:0};
 const weaponCooldownTime={laser:1000,bomb:5000,freeze:3000};
+let bombs=[];
 
-class Box{constructor(){this.size=50;this.x=Math.random()*(canvas.width-50);this.y=Math.random()*(canvas.height-50);} draw(){ctx.fillStyle='red'; ctx.fillRect(this.x,this.y,this.size,this.size);} respawn(){this.x=Math.random()*(canvas.width-this.size); this.y=Math.random()*(canvas.height-this.size); spawnPowerup();}}
-class Enemy{constructor(){this.size=40;this.x=Math.random()*(canvas.width-40);this.y=-this.size;this.speed=2+Math.random()*level; this.frozen=false;} draw(){ctx.fillStyle='orange'; ctx.fillRect(this.x,this.y,this.size,this.size);} update(){if(!this.frozen){this.y+=this.speed; if(this.y>canvas.height){ this.y=-this.size; this.x=Math.random()*(canvas.width-this.size); lives--; if(lives<=0){gameOver=true; restartBtn.style.display='block'; }}}}}
+class Box{constructor(){this.size=50;this.x=canvas.width/2-25;this.y=canvas.height-100;} draw(){ctx.fillStyle='red'; ctx.fillRect(this.x,this.y,this.size,this.size);} }
+class Enemy{constructor(){this.size=40;this.x=Math.random()*(canvas.width-40);this.y=-this.size;this.speed=2+Math.random()*level; this.frozen=false;} draw(){ctx.fillStyle='yellow'; ctx.fillRect(this.x,this.y,this.size,this.size);} update(){if(!this.frozen){this.y+=this.speed; if(this.y+this.size>=playerBox.y && this.y<=playerBox.y+playerBox.size && this.x+this.size>=playerBox.x && this.x<=playerBox.x+playerBox.size){lives--; this.y=-this.size; this.x=Math.random()*(canvas.width-this.size); if(lives<=0){gameOver=true; restartBtn.style.display='block';}} if(this.y>canvas.height){ this.y=-this.size; this.x=Math.random()*(canvas.width-this.size); }}}}
 
 let playerBox=new Box();
 let enemies=[];
-function spawnEnemies(){ enemies=[]; for(let i=0;i<level+2;i++) enemies.push(new Enemy()); }
+function spawnEnemies(){ enemies=[]; for(let i=0;i<level+3;i++) enemies.push(new Enemy()); }
 spawnEnemies();
 
-const powerupTypes=['speedBoost','scoreX2','extraTime'];
-function spawnPowerup(){ if(Math.random()<0.2){const type=powerupTypes[Math.floor(Math.random()*powerupTypes.length)]; activePowerups[type]=type==='extraTime'?true:Date.now()+10000; if(type==='extraTime') timeLeft+=10; renderPowerups();}}
-function renderPowerups(){ powerupDiv.innerHTML=''; for(let p in activePowerups){ const div=document.createElement('div'); div.className='powerup'; div.textContent=p==='speedBoost'?'S':p==='scoreX2'?'x2':'T'; powerupDiv.appendChild(div);}}
+function spawnPowerup(){ if(Math.random()<0.2){ const type='scoreX2'; activePowerups[type]=Date.now()+10000; renderPowerups(); }}
+function renderPowerups(){ powerupDiv.innerHTML=''; for(let p in activePowerups){ const div=document.createElement('div'); div.className='powerup'; div.textContent='x2'; powerupDiv.appendChild(div); }}
 
-canvas.addEventListener('touchstart',e=>{
-    if(gameOver) return;
-    const rect=canvas.getBoundingClientRect();
-    const touch=e.touches[0];
-    const x=touch.clientX-rect.left;
-    const y=touch.clientY-rect.top;
-    if(x>=playerBox.x && x<=playerBox.x+playerBox.size && y>=playerBox.y && y<=playerBox.y+playerBox.size){
-        let points=activePowerups.scoreX2?2:1;
-        score+=points;
-        playerBox.respawn();
-        if(score%5===0){ level++; spawnEnemies(); }
-        if(level>20 && !unlocked){ document.getElementById('payMainPage').style.display='block'; }
-    }
-});
-
-const timer=setInterval(()=>{ if(gameOver) return; timeLeft--; if(timeLeft<=0){gameOver=true; restartBtn.style.display='block'; } },1000);
-
-// --- Waffen ---
+// ------------------- LASER & BOMB -------------------
 function useWeapon(type){
     const now=Date.now(); if(now<weaponCooldowns[type]) return; weaponCooldowns[type]=now+weaponCooldownTime[type];
-    if(type==='laser'){ enemies.forEach(e=>{ if(e.y>0 && e.y<canvas.height){ e.y=-e.size; score++; }});}
-    else if(type==='bomb'){ enemies.forEach(e=>{ const dx=(playerBox.x+playerBox.size/2)-(e.x+e.size/2); const dy=(playerBox.y+playerBox.size/2)-(e.y+e.size/2); const dist=Math.sqrt(dx*dx+dy*dy); if(dist<100){ e.y=-e.size; score++; }});}
-    else if(type==='freeze'){ enemies.forEach(e=>{ e.frozen=true; }); setTimeout(()=>{ enemies.forEach(e=>{ e.frozen=false; }); },3000);}
+    if(type==='laser'){
+        ctx.strokeStyle='red'; ctx.lineWidth=4;
+        ctx.beginPath(); ctx.moveTo(playerBox.x+playerBox.size/2, playerBox.y); ctx.lineTo(playerBox.x+playerBox.size/2,0); ctx.stroke();
+        enemies.forEach(e=>{ if(e.y<playerBox.y) { e.y=-e.size; score++; }});
+    } else if(type==='bomb'){
+        const bombX=playerBox.x+playerBox.size/2; const bombY=playerBox.y;
+        bombs.push({x:bombX,y:bombY,radius:0,explode:false});
+    } else if(type==='freeze'){ enemies.forEach(e=>{ e.frozen=true; }); setTimeout(()=>{ enemies.forEach(e=>{ e.frozen=false; }); },3000);}
 }
+
 document.getElementById('laserBtn').addEventListener('click',()=>useWeapon('laser'));
 document.getElementById('bombBtn').addEventListener('click',()=>useWeapon('bomb'));
 document.getElementById('freezeBtn').addEventListener('click',()=>useWeapon('freeze'));
 
-// --- RESTART ---
+// ------------------- RESTART -------------------
 restartBtn.addEventListener('click', ()=>{
     score=0; level=1; timeLeft=60; lives=3; gameOver=false; unlocked=false;
-    restartBtn.style.display='none';
-    spawnEnemies();
+    restartBtn.style.display='none'; document.getElementById('payMainPage').style.display='none';
+    spawnEnemies(); bombs=[];
     gameLoop();
 });
 
+// ------------------- GAME LOOP -------------------
 function gameLoop(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    for(let i=0;i<50;i++){ ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fillRect(Math.random()*canvas.width,Math.random()*canvas.height,2,2); }
     playerBox.draw();
     enemies.forEach(e=>{ e.update(); e.draw(); });
-    const now=Date.now();
-    for(let p in activePowerups){ if(activePowerups[p]!==true && now>activePowerups[p]) delete activePowerups[p]; }
-    renderPowerups();
+    // Bomb Update
+    bombs.forEach((b,i)=>{
+        if(!b.explode){ b.y-=2; b.radius+=2; ctx.fillStyle='orange'; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); if(b.radius>30){ b.explode=true; enemies.forEach(e=>{ const dx=b.x-(e.x+e.size/2); const dy=b.y-(e.y+e.size/2); const dist=Math.sqrt(dx*dx+dy*dy); if(dist<50){ e.y=-e.size; score++; }}); setTimeout(()=>{bombs.splice(i,1);},200);} }});
     info.textContent=`Score: ${score} | Level: ${level} | Lives: ${lives} | Time: ${timeLeft}`;
     if(!gameOver) requestAnimationFrame(gameLoop);
 }
 gameLoop();
-
-// ------------------- MAIN PAGE PAYMENT -------------------
-const payMainPageBtn=document.getElementById('payMainPage');
-const accessStatus=document.getElementById('accessStatus');
-payMainPageBtn.addEventListener('click', async ()=>{
-    if(!window.ethereum){ alert('Wallet nicht gefunden!'); return; }
-    try{
-        await window.ethereum.request({ method:'eth_requestAccounts' });
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        const tx = await signer.sendTransaction({
-            to: 'DEINE_WALLET_ADRESSE_HIER', // <-- manuell eintragen
-            value: ethers.parseEther("0.00001")
-        });
-        await tx.wait();
-        unlocked=true;
-        accessStatus.textContent="Zutritt gewährt!";
-        accessStatus.style.color="lime";
-    }catch(e){ console.error(e); accessStatus.textContent="Payment fehlgeschlagen!"; accessStatus.style.color="red"; }
-});
 </script>
-
 </body>
 </html>
