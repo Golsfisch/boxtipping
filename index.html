@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Box's Mysterium - Spielversion</title>
+<title>Box's Mysterium</title>
 <style>
 body {margin:0;font-family:sans-serif;overflow:hidden;user-select:none;background:#111;color:#fff;}
 header {width:100%;text-align:center;padding:15px;font-size:24px;font-weight:bold;display:flex;justify-content:center;align-items:center;gap:10px;}
@@ -119,6 +119,8 @@ class Bullet{
 let player=new Player();
 let enemies=[];
 let bullets=[];
+let bombs=[];
+
 function spawnEnemies(){enemies=[]; for(let i=0;i<5;i++) enemies.push(new Enemy());}
 spawnEnemies();
 
@@ -127,14 +129,12 @@ let gunActive=false;
 let gunEndTime=0;
 
 document.getElementById('laserBtn').addEventListener('click',()=>{
-  gunActive=true;
-  gunEndTime=Date.now()+4500; // 4,5 Sekunden Gun aktiv
+  gunActive=true; gunEndTime=Date.now()+4500; // 4,5 Sekunden Gun aktiv
 });
 
-let bombs=[];
 document.getElementById('bombBtn').addEventListener('click',()=>{
-  let b=new Enemy(); // einfache Bombe als Platzhalter
-  b.y=player.y; b.x=player.x; bombs.push(b);
+  let b={x:player.x+player.size/2, y:player.y, radius:15, start:Date.now(), exploded:false};
+  bombs.push(b);
 });
 
 document.getElementById('freezeBtn').addEventListener('click',()=>{
@@ -160,7 +160,21 @@ function gameLoop(){
   bullets.forEach((b,i)=>{b.update(); b.draw(); if(b.y<0) bullets.splice(i,1);});
 
   // Bombs
-  bombs.forEach(b=>{b.draw();});
+  bombs.forEach((b,i)=>{
+    let elapsed=Date.now()-b.start;
+    ctx.fillStyle='blue'; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill();
+    if(!b.exploded && elapsed>=2000){
+      b.exploded=true;
+      ctx.fillStyle='rgba(0,255,255,0.5)';
+      ctx.beginPath(); ctx.arc(b.x,b.y,canvas.width/3,0,Math.PI*2); ctx.fill();
+      enemies.forEach((e,j)=>{
+        if(Math.abs(e.x+e.size/2-b.x)<canvas.width/3 && Math.abs(e.y+e.size/2-b.y)<canvas.width/3){
+          score++; e.y=-e.size; e.x=Math.random()*(canvas.width-e.size);
+        }
+      });
+      setTimeout(()=>{bombs.splice(i,1);},300);
+    }
+  });
 
   enemies.forEach(e=>{e.update(); e.draw();});
 
