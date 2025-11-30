@@ -264,15 +264,40 @@ function endGame() {
 }
 
 // === RESTART ========================================
-restartBtn.onclick = ()=> {
-  score = 0;
-  lives = 3;
-  level = 1;
-  gameOver = false;
-  spawnEnemies();
-  restartBtn.style.display="none";
-};
+const restartBtn = document.getElementById("restartBtn");
 
+restartBtn.addEventListener("click", () => {
+
+    console.log("RESTART CLICKED"); // ← Debug, damit du siehst ob Button reagiert
+
+    // 1. GameOver OFF
+    gameOver = false;
+
+    // 2. Reset stats
+    score = 0;
+    level = 1;
+    lives = 3;
+
+    // 3. Reset arrays
+    bullets = [];
+    powerups = [];
+    enemies = [];
+
+    // 4. Player reset
+    player.x = canvas.width / 2 - player.size / 2;
+    player.y = canvas.height - 120;
+
+    // 5. Optional: Gegner spawnen
+    if (typeof spawnEnemies === "function") {
+        spawnEnemies();
+    }
+
+    // 6. Restart-Button verstecken
+    restartBtn.style.display = "none";
+
+    // 7. SICHERHEIT: GameLoop wieder anstoßen
+    requestAnimationFrame(gameLoop);
+});
 // === GAME LOOP ======================================
 spawnEnemies();
 
@@ -317,9 +342,16 @@ function gameLoop(){
 
   info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
 
-  if (!gameOver) requestAnimationFrame(gameLoop);
+  function gameLoop() {
+
+    if (!gameOver) {
+        update();
+    } 
+
+    draw();
+
+    requestAnimationFrame(gameLoop);
 }
-gameLoop();
 </script>
 
 </body>
