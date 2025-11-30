@@ -65,16 +65,49 @@ class Enemy {
 for(let i=0;i<5;i++) enemies.push(new Enemy());
 
 // --- Restart-Button ---
+// --- Restart Button ---
 restartBtn.addEventListener("click", () => {
-    lives = 3;
-    player.x = canvas.width/2 - player.size/2;
+    lives = 3;  // Leben zurücksetzen
+    player.x = canvas.width/2 - player.size/2;  // Spielerposition zurücksetzen
     player.y = canvas.height - 120;
+
     bullets = [];
     powerups = [];
-    enemies.forEach(e=>e.reset());
-    gameOver = false;
+
+    enemies.forEach(e => {
+        if(typeof e.reset === "function") e.reset();
+        else { e.x = Math.random()*(canvas.width-40); e.y = -Math.random()*400-40; }
+    });
+
+    gameOver = false;           // GameOver zurücksetzen
     restartBtn.style.display = "none";
-    updateInfo();
+
+    // Info aktualisieren
+    if(info) info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
+});
+
+// --- GameOver Check ---
+function checkGameOver() {
+    if(lives <= 0 && !gameOver){
+        gameOver = true;
+        restartBtn.style.display = "block";
+    }
+}
+
+// --- Im Game-Loop unbedingt aufrufen ---
+function gameLoop() {
+    // Zeichne Hintergrund, Spieler, Gegner etc.
+
+    if(!gameOver) {
+        // Bewegungs-/Kollisionslogik nur, wenn nicht GameOver
+        enemies.forEach(e => e.update());
+        bullets.forEach(b => b.update());
+        // weitere Logik...
+    }
+
+    checkGameOver();  // Button anzeigen, wenn nötig
+
+    requestAnimationFrame(gameLoop);  // Loop läuft immer weiter
 });
 
 // --- Info aktualisieren ---
