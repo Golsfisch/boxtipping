@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <title>BoxTipping Ultimate</title>
 <style>
-body { margin:0; background:#111; font-family:Arial; text-align:center; color:white; overflow:hidden;}
-canvas { display:block; margin:0 auto; background:#222; border:2px solid #555; }
+body { margin:0; background:#111; font-family:Arial; color:white; text-align:center; overflow:hidden; }
+canvas { display:block; margin:20px auto; background:#222; border:2px solid #555; }
 button { padding:10px 20px; font-size:16px; margin:5px; border:none; border-radius:5px; cursor:pointer;}
 #restartBtn { background:#f00; color:white; display:none; position:absolute; top:10px; left:10px;}
 #menuBtn { background:#444; color:white; position:absolute; top:10px; left:120px;}
@@ -14,7 +14,9 @@ button { padding:10px 20px; font-size:16px; margin:5px; border:none; border-radi
 <body>
 
 <h1>BoxTipping Ultimate</h1>
+
 <canvas id="game" width="400" height="600"></canvas>
+
 <button id="restartBtn">Restart</button>
 <button id="menuBtn">Menü</button>
 
@@ -39,6 +41,7 @@ let boss = null;
 // Powerups & Waffen
 let bullets = [];
 let powerups = [];
+let weapons = [];
 
 // ------------------------------
 // SPIELFUNKTIONEN
@@ -73,6 +76,7 @@ function resetGame() {
     enemies = [];
     bullets = [];
     powerups = [];
+    weapons = [];
     boss = null;
     player.x = canvas.width/2 - player.w/2;
     player.y = canvas.height - 120;
@@ -102,6 +106,7 @@ function gameLoop() {
         ctx.fillStyle="yellow";
         ctx.fillRect(e.x,e.y,e.w,e.h);
 
+        // Kollision mit Spieler
         if(e.y + e.h >= player.y &&
            e.x < player.x + player.w &&
            e.x + e.w > player.x){
@@ -113,46 +118,54 @@ function gameLoop() {
             }
         }
 
+        // Gegner unten durch
         if(e.y>canvas.height){
             enemies.splice(i,1);
-            score += 10;
+            score +=10;
         }
     }
 
-    // Boss zeichnen
+    // Boss
     if(level>=5 && !boss) spawnBoss();
     if(boss){
         boss.y += boss.speed;
         ctx.fillStyle="purple";
         ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
 
-        // Spieler-Kollision Boss
+        // Kollision Spieler-Boss
         if(boss.y + boss.h >= player.y &&
            boss.x < player.x + player.w &&
            boss.x + boss.w > player.x){
-            lives=0;
+            lives = 0;
             gameRunning=false;
             restartBtn.style.display="block";
         }
     }
 
-    // Bullets & Powerups (Platzhalter)
-    bullets.forEach(b=> ctx.fillRect(b.x,b.y,b.w,b.h));
-    powerups.forEach(p=> ctx.fillRect(p.x,p.y,p.w,p.h));
+    // Bullets
+    bullets.forEach(b=>{
+        b.y -= b.speed;
+        ctx.fillStyle="cyan";
+        ctx.fillRect(b.x,b.y,b.w,b.h);
+    });
+
+    // Powerups
+    powerups.forEach(p=>{
+        ctx.fillStyle="green";
+        ctx.fillRect(p.x,p.y,p.w,p.h);
+    });
 
     // Gegner nachspawnen
     if(enemies.length<3+level) spawnEnemy();
+
+    // Level hochsetzen
+    if(score >= level*50) level++;
 
     // Paywall ab Level 4
     if(level>=4 && !payUnlocked){
         gameRunning=false;
         alert("Zahlung erforderlich um weiterzuspielen!");
-        payUnlocked = true; // hier später ETH-Payment einfügen
-    }
-
-    // Level hochsetzen
-    if(score >= level*50){
-        level++;
+        payUnlocked = true;
     }
 }
 
@@ -164,7 +177,12 @@ document.addEventListener("keydown",(e)=>{
     if(e.key==="ArrowRight") player.x+=player.speed;
     if(player.x<0) player.x=0;
     if(player.x+player.w>canvas.width) player.x=canvas.width-player.w;
+    if(e.key===" ") shootBullet();
 });
+
+function shootBullet(){
+    bullets.push({x:player.x+player.w/2-5, y:player.y, w:10, h:10, speed:8});
+}
 
 // Restart Button
 const restartBtn = document.getElementById("restartBtn");
