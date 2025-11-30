@@ -74,6 +74,32 @@ canvas {
 <button id="restartBtn">Restart</button>
 <button id="payBtn">Freischalten (0.0001 ETH)</button>
 <button id="connectBtn">Wallet verbinden</button>
+  // Spiel direkt starten
+startGame();
+
+function startGame() {
+    // Variablen initialisieren
+    score = 0;
+    lives = 3;
+    level = 1;
+    gameOver = false;
+    gameRunning = true;
+
+    // Spieler zurücksetzen
+    player.x = canvas.width / 2 - player.size / 2;
+    player.y = canvas.height - 120;
+
+    // Gegner, Bullets, Powerups löschen
+    enemies = [];
+    bullets = [];
+    powerups = [];
+
+    // Buttons ausblenden
+    restartBtn.style.display = "none";
+
+    // Game Loop starten
+    gameLoop();
+}
 
 <script>
 // === CANVAS SETUP ==================================
