@@ -319,7 +319,28 @@ function gameLoop(){
 
   if (!gameOver) requestAnimationFrame(gameLoop);
 }
-gameLoop();
+
+  
+  
+  
+// === Restart-Button Funktion ===
+const restartBtn = document.getElementById("restartBtn"); // Stelle sicher, dass der Button diese ID hat
+
+restartBtn.addEventListener("click", () => {
+    // === Zurücksetzen, was zurückgesetzt werden soll ===
+    lives = 3;                 // Leben zurücksetzen
+    player.x = canvas.width/2 - player.size/2; // Spielerposition zurücksetzen
+    spawnEnemies();             // Gegner neu spawnen
+    powerups = [];              // Powerups zurücksetzen, falls vorhanden
+    bullets = [];               // Projektile zurücksetzen, falls vorhanden
+
+    // === Status ===
+    gameOver = false;           // GameOver-Flag zurücksetzen
+    restartBtn.style.display = "none"; // Button wieder ausblenden
+
+    // === Info aktualisieren, Score/Level bleiben ===
+    info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
+});  gameLoop();
 </script>
 
 </body>
