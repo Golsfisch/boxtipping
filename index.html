@@ -263,36 +263,15 @@ function endGame() {
   restartBtn.style.display = "block";
 }
 
-// === RESTART ==========================================
-  document.getElementById("restartBtn").addEventListener("click", () => {
-    // 1️⃣ Variablen zurücksetzen
-    score = 0;
-    lives = 3;
-    level = 1;
-    gameOver = false;
-    gameRunning = true;  // Logik wieder aktiv
-
-    // 2️⃣ Spielerposition zurücksetzen
-    player.x = canvas.width / 2 - player.size / 2;
-    player.y = canvas.height - 120;
-
-    // 3️⃣ Gegner, Bullets, Powerups löschen
-    enemies = [];
-    bullets = [];
-    powerups = [];
-
-    // 4️⃣ Buttons ausblenden
-    document.getElementById("restartBtn").style.display = "none";
-
-    // 5️⃣ Loop NEU starten, falls er gestoppt wurde
-    cancelAnimationFrame(gameLoopID); // alte Frame stoppen
-    gameLoop(); // Loop neu starten
-
-    // 6️⃣ Gegner neu spawnen (falls Funktion existiert)
-    if (typeof spawnEnemies === "function") spawnEnemies();
-});
-
-  
+// === RESTART ========================================
+restartBtn.onclick = ()=> {
+  score = 0;
+  lives = 3;
+  level = 1;
+  gameOver = false;
+  spawnEnemies();
+  restartBtn.style.display="none";
+};
 
 // === GAME LOOP ======================================
 spawnEnemies();
@@ -337,17 +316,7 @@ function gameLoop(){
   }
 
   info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
-let gameLoopID;
-let gameRunning = true;
 
-function gameLoop() {
-    gameLoopID = requestAnimationFrame(gameLoop);
-
-    if (!gameRunning) return;  // Logik anhalten, Loop läuft aber weiter
-
-    update();  // z. B. Spieler, Gegner, Powerups
-    draw();    // Rendern
-}
   if (!gameOver) requestAnimationFrame(gameLoop);
 }
 gameLoop();
