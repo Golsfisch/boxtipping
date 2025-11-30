@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>BoxTipping Ultimate - Level4 Paywall</title>
+<title>BoxTipping Ultimate</title>
 <style>
 body { margin:0; background:#111; font-family:Arial; color:white; overflow:hidden; }
 canvas { display:block; margin:20px auto; background:#222; border:2px solid #555; }
@@ -29,7 +29,7 @@ button { padding:10px 20px; font-size:16px; margin:5px; border:none; border-radi
 </div>
 
 <div id="payOverlay">
-  <p>Level 4 erreicht! Zahle 0,00001 ETH (SOL) um weiterzuspielen.</p>
+  <p>Level 4 erreicht! Zahle 0,00001 ETH/SOL um weiterzuspielen.</p>
   <button id="payBtn">Bezahlen</button>
 </div>
 
@@ -39,9 +39,9 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 let score, level, hits, gameRunning;
-const maxHits = 8; // Hits bis Paywall
+const maxHits = 8;
 let enemies=[], bullets=[], powerups=[], weapons=[], boss=null;
-let payUnlocked = false; // bleibt nach Zahlung true
+let payUnlocked = false;
 
 const player = { x:180, y:550, w:40, h:40, speed:6 };
 
@@ -59,58 +59,30 @@ function resetGame(){
     player.x = canvas.width/2 - player.w/2;
     player.y = 550;
     restartBtn.style.display = "none";
-    // Paywall bleibt unsichtbar, Status payUnlocked bleibt
     if(level>=4 && !payUnlocked) payOverlay.style.display = "none";
 }
 
 // ==================== SPAWN ====================
 function spawnEnemy(){
-    enemies.push({
-        x: Math.random()*(canvas.width-40),
-        y: -40,
-        w:40,
-        h:40,
-        speed: 2 + Math.random()*level*0.5
-    });
+    enemies.push({x: Math.random()*(canvas.width-40), y: -40, w:40, h:40, speed: 2 + Math.random()*level*0.5});
 }
 
 function spawnPowerup(){
-    powerups.push({
-        x: Math.random()*(canvas.width-20),
-        y: -20,
-        w:20,
-        h:20,
-        type: Math.random()<0.5 ? "gun" : "freeze",
-        speed:2
-    });
+    powerups.push({x: Math.random()*(canvas.width-20), y: -20, w:20, h:20, type: Math.random()<0.5?"gun":"freeze", speed:2});
 }
 
 function spawnBoss(){
-    boss = {
-        x: canvas.width/2-60,
-        y: -120,
-        w:120,
-        h:80,
-        speed:1 + level*0.2,
-        hp: 20 + level*6
-    };
+    boss = {x: canvas.width/2-60, y:-120, w:120, h:80, speed:1+level*0.2, hp:20+level*6};
 }
 
 // ==================== SHOOT ====================
 function shootBullet(){
-    bullets.push({
-        x: player.x+player.w/2-4,
-        y: player.y,
-        w:8,
-        h:12,
-        speed:8
-    });
+    bullets.push({x:player.x+player.w/2-4, y:player.y, w:8, h:12, speed:8});
 }
 
 // ==================== GAME LOOP ====================
 function gameLoop(){
     requestAnimationFrame(gameLoop);
-
     if(!gameRunning) return;
 
     // Hintergrund
@@ -127,101 +99,50 @@ function gameLoop(){
 
     // BULLETS
     for(let i=bullets.length-1;i>=0;i--){
-        let b=bullets[i];
-        b.y -= b.speed;
-        ctx.fillStyle="cyan";
-        ctx.fillRect(b.x,b.y,b.w,b.h);
+        let b=bullets[i]; b.y-=b.speed; ctx.fillStyle="cyan"; ctx.fillRect(b.x,b.y,b.w,b.h);
         if(b.y<-10) bullets.splice(i,1);
     }
 
     // GEGNER
     for(let i=enemies.length-1;i>=0;i--){
-        let e=enemies[i];
-        e.y += e.speed;
-        ctx.fillStyle="yellow";
-        ctx.fillRect(e.x,e.y,e.w,e.h);
+        let e=enemies[i]; e.y+=e.speed; ctx.fillStyle="yellow"; ctx.fillRect(e.x,e.y,e.w,e.h);
 
-        // Treffer durch Bullet
+        // Treffer
         for(let j=bullets.length-1;j>=0;j--){
             let b=bullets[j];
-            if(b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y){
-                enemies.splice(i,1);
-                bullets.splice(j,1);
-                score +=10;
-                break;
-            }
+            if(b.x<e.x+e.w && b.x+b.w>e.x && b.y<e.y+e.h && b.y+b.h>e.y){ enemies.splice(i,1); bullets.splice(j,1); score+=10; break; }
         }
 
         // Gegner trifft Spieler
-        if(e.y + e.h >= player.y && e.x < player.x + player.w && e.x + e.w > player.x){
+        if(e.y+e.h>=player.y && e.x<player.x+player.w && e.x+e.w>player.x){
             enemies.splice(i,1);
             hits++;
-            if(level>=4 && !payUnlocked && hits>=maxHits){
-                // Paywall
-                gameRunning=false;
-                payOverlay.style.display="block";
-            } else if(hits>=maxHits){
-                // normale GameOver
-                gameRunning=false;
-                restartBtn.style.display="block";
-            }
+            if(level>=4 && !payUnlocked && hits>=maxHits){ gameRunning=false; payOverlay.style.display="block"; }
+            else if(hits>=maxHits){ gameRunning=false; restartBtn.style.display="block"; }
         }
-
         if(e.y>canvas.height) enemies.splice(i,1);
     }
 
-    if(enemies.length < 3 + level) spawnEnemy();
+    if(enemies.length<3+level) spawnEnemy();
     if(Math.random()<0.01) spawnPowerup();
 
     // POWERUPS
     for(let i=powerups.length-1;i>=0;i--){
-        let p = powerups[i];
-        p.y += p.speed;
-        ctx.fillStyle=p.type==="gun"?"blue":"green";
-        ctx.fillRect(p.x,p.y,p.w,p.h);
-
-        if(player.x < p.x+p.w && player.x+player.w>p.x && player.y<p.y+p.h && player.y+player.h>p.y){
-            powerups.splice(i,1);
-            if(p.type==="gun") weapons.push({duration:180});
-        }
-
+        let p=powerups[i]; p.y+=p.speed; ctx.fillStyle=p.type==="gun"?"blue":"green"; ctx.fillRect(p.x,p.y,p.w,p.h);
+        if(player.x<p.x+p.w && player.x+player.w>p.x && player.y<p.y+p.h && player.y+player.h>p.y){ powerups.splice(i,1); if(p.type==="gun") weapons.push({duration:180}); }
         if(p.y>canvas.height) powerups.splice(i,1);
     }
 
-    for(let i=weapons.length-1;i>=0;i--){
-        weapons[i].duration--;
-        if(weapons[i].duration<=0) weapons.splice(i,1);
-    }
+    for(let i=weapons.length-1;i>=0;i--){ weapons[i].duration--; if(weapons[i].duration<=0) weapons.splice(i,1); }
 
     // BOSS
     if(level>=5 && !boss) spawnBoss();
-    if(boss){
-        boss.y += boss.speed;
-        ctx.fillStyle="purple";
-        ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
-
-        for(let i=bullets.length-1;i>=0;i--){
-            let b=bullets[i];
-            if(b.x < boss.x+boss.w && b.x+b.w > boss.x && b.y<boss.y+boss.h && b.y+b.h>boss.y){
-                bullets.splice(i,1);
-                boss.hp--;
-                if(boss.hp<=0){
-                    boss=null;
-                    level++;
-                    score+=100;
-                }
-            }
-        }
-
+    if(boss){ boss.y+=boss.speed; ctx.fillStyle="purple"; ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
+        for(let i=bullets.length-1;i>=0;i--){ let b=bullets[i]; if(b.x<boss.x+boss.w && b.x+b.w>boss.x && b.y<boss.y+boss.h && b.y+b.h>boss.y){ bullets.splice(i,1); boss.hp--; if(boss.hp<=0){ boss=null; level++; score+=100; } } }
         if(boss.y+boss.h>=player.y && boss.x<player.x+player.w && boss.x+boss.w>player.x){
             hits++;
-            if(level>=4 && !payUnlocked && hits>=maxHits){
-                gameRunning=false;
-                payOverlay.style.display="block";
-            } else if(hits>=maxHits){
-                gameRunning=false;
-                restartBtn.style.display="block";
-            }
+            if(level>=4 && !payUnlocked && hits>=maxHits){ gameRunning=false; payOverlay.style.display="block"; }
+            else if(hits>=maxHits){ gameRunning=false; restartBtn.style.display="block"; }
         }
     }
 
@@ -234,47 +155,25 @@ function gameLoop(){
 
 // ==================== EVENTS ====================
 document.addEventListener("keydown",(e)=>{
-    let moveSpeed = player.speed;
-
-    if(level<4){ // links/rechts
-        if(e.key==="ArrowLeft") player.x-=moveSpeed;
-        if(e.key==="ArrowRight") player.x+=moveSpeed;
-    } else { // volle Bewegung ab Level4
-        if(e.key==="ArrowLeft") player.x-=moveSpeed;
-        if(e.key==="ArrowRight") player.x+=moveSpeed;
-        if(e.key==="ArrowUp") player.y-=moveSpeed;
-        if(e.key==="ArrowDown") player.y+=moveSpeed;
-    }
-
+    let moveSpeed=player.speed;
+    if(level<4){ if(e.key==="ArrowLeft") player.x-=moveSpeed; if(e.key==="ArrowRight") player.x+=moveSpeed; }
+    else { if(e.key==="ArrowLeft") player.x-=moveSpeed; if(e.key==="ArrowRight") player.x+=moveSpeed; if(e.key==="ArrowUp") player.y-=moveSpeed; if(e.key==="ArrowDown") player.y+=moveSpeed; }
     if(e.key===" ") shootBullet();
-
-    if(player.x<0) player.x=0;
-    if(player.x+player.w>canvas.width) player.x=canvas.width-player.w;
-    if(player.y<0) player.y=0;
-    if(player.y+player.h>canvas.height) player.y=canvas.height-player.h;
+    if(player.x<0) player.x=0; if(player.x+player.w>canvas.width) player.x=canvas.width-player.w;
+    if(player.y<0) player.y=0; if(player.y+player.h>canvas.height) player.y=canvas.height-player.h;
 });
 
 // ==================== BUTTONS ====================
 const restartBtn=document.getElementById("restartBtn");
-restartBtn.addEventListener("click",()=>{
-    resetGame();
-    gameRunning = true;
-});
+restartBtn.addEventListener("click",()=>{ resetGame(); gameRunning=true; });
 
 const menuBtn=document.getElementById("menuBtn");
 const menuContent=document.getElementById("menuContent");
-menuBtn.addEventListener("click",()=>{
-    menuContent.style.display = menuContent.style.display==="block" ? "none" : "block";
-});
+menuBtn.addEventListener("click",()=>{ menuContent.style.display=menuContent.style.display==="block"?"none":"block"; });
 
 const payOverlay=document.getElementById("payOverlay");
 const payBtn=document.getElementById("payBtn");
-payBtn.addEventListener("click",()=>{
-    payUnlocked=true; // Zahlung gilt
-    hits=0; // Hits zurücksetzen
-    payOverlay.style.display="none";
-    gameRunning = true;
-});
+payBtn.addEventListener("click",()=>{ payUnlocked=true; hits=0; payOverlay.style.display="none"; gameRunning=true; });
 
 // ==================== START ====================
 resetGame();
