@@ -26,7 +26,15 @@ button { padding:10px 20px; font-size:16px; margin:5px; border:none; border-radi
   <a href="seite2.html">BoxTipping V2</a>
 </div>
 
-<script>
+<script>// ==================== RESTART BUTTON ====================
+const restartBtn = document.getElementById("restartBtn");
+restartBtn.addEventListener("click", () => {
+    resetGame();
+    // Falls der Loop wegen Game Over gestoppt wurde
+    if (!gameRunning) {
+        gameRunning = true;
+    }
+});
 // ==================== VARIABLEN ====================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
