@@ -2,16 +2,18 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>BoxTipping Ultimate</title>
+<title>BoxTipping Ultimate - Level4 Paywall</title>
 <style>
 body { margin:0; background:#111; font-family:Arial; color:white; overflow:hidden; }
 canvas { display:block; margin:20px auto; background:#222; border:2px solid #555; }
 button { padding:10px 20px; font-size:16px; margin:5px; border:none; border-radius:5px; cursor:pointer; }
-#restartBtn { background:#f00; color:white; display:none; position:absolute; top:10px; left:10px; z-index:100;}
+#restartBtn { background:#f00; color:white; position:absolute; top:10px; left:10px; z-index:100; display:none;}
 #menuBtn { background:#444; color:white; position:absolute; top:10px; left:150px; z-index:100;}
 #menuContent { display:none; position:absolute; top:40px; left:10px; background:#333; padding:10px; border-radius:5px; text-align:left; }
 #menuContent a { display:block; color:white; text-decoration:none; padding:5px 0; }
 #menuContent a:hover { background:#555; }
+#payOverlay { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); color:white; text-align:center; font-size:20px; padding-top:200px; z-index:200; }
+#payBtn { padding:10px 20px; font-size:18px; background:green; color:white; border:none; border-radius:5px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -26,23 +28,20 @@ button { padding:10px 20px; font-size:16px; margin:5px; border:none; border-radi
   <a href="seite2.html">BoxTipping V2</a>
 </div>
 
-<script>// ==================== RESTART BUTTON ====================
-const restartBtn = document.getElementById("restartBtn");
-restartBtn.addEventListener("click", () => {
-    resetGame();
-    // Falls der Loop wegen Game Over gestoppt wurde
-    if (!gameRunning) {
-        gameRunning = true;
-    }
-});
+<div id="payOverlay">
+  <p>Level 4 erreicht! Zahle 0,00001 ETH (SOL) um weiterzuspielen.</p>
+  <button id="payBtn">Bezahlen</button>
+</div>
+
+<script>
 // ==================== VARIABLEN ====================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let score, level, lives, hits, gameRunning;
-const maxHits = 8;
+let score, level, hits, gameRunning;
+const maxHits = 8; // Hits bis Paywall
 let enemies=[], bullets=[], powerups=[], weapons=[], boss=null;
-let payUnlocked = false;
+let payUnlocked = false; // bleibt nach Zahlung true
 
 const player = { x:180, y:550, w:40, h:40, speed:6 };
 
@@ -50,7 +49,6 @@ const player = { x:180, y:550, w:40, h:40, speed:6 };
 function resetGame(){
     score = 0;
     level = 1;
-    lives = 3;
     hits = 0;
     gameRunning = true;
     enemies = [];
@@ -58,10 +56,11 @@ function resetGame(){
     powerups = [];
     weapons = [];
     boss = null;
-    payUnlocked = false;
     player.x = canvas.width/2 - player.w/2;
     player.y = 550;
     restartBtn.style.display = "none";
+    // Paywall bleibt unsichtbar, Status payUnlocked bleibt
+    if(level>=4 && !payUnlocked) payOverlay.style.display = "none";
 }
 
 // ==================== SPAWN ====================
@@ -157,7 +156,12 @@ function gameLoop(){
         if(e.y + e.h >= player.y && e.x < player.x + player.w && e.x + e.w > player.x){
             enemies.splice(i,1);
             hits++;
-            if(hits>=maxHits){
+            if(level>=4 && !payUnlocked && hits>=maxHits){
+                // Paywall
+                gameRunning=false;
+                payOverlay.style.display="block";
+            } else if(hits>=maxHits){
+                // normale GameOver
                 gameRunning=false;
                 restartBtn.style.display="block";
             }
@@ -211,7 +215,10 @@ function gameLoop(){
 
         if(boss.y+boss.h>=player.y && boss.x<player.x+player.w && boss.x+boss.w>player.x){
             hits++;
-            if(hits>=maxHits){
+            if(level>=4 && !payUnlocked && hits>=maxHits){
+                gameRunning=false;
+                payOverlay.style.display="block";
+            } else if(hits>=maxHits){
                 gameRunning=false;
                 restartBtn.style.display="block";
             }
@@ -251,12 +258,22 @@ document.addEventListener("keydown",(e)=>{
 const restartBtn=document.getElementById("restartBtn");
 restartBtn.addEventListener("click",()=>{
     resetGame();
+    gameRunning = true;
 });
 
 const menuBtn=document.getElementById("menuBtn");
 const menuContent=document.getElementById("menuContent");
 menuBtn.addEventListener("click",()=>{
     menuContent.style.display = menuContent.style.display==="block" ? "none" : "block";
+});
+
+const payOverlay=document.getElementById("payOverlay");
+const payBtn=document.getElementById("payBtn");
+payBtn.addEventListener("click",()=>{
+    payUnlocked=true; // Zahlung gilt
+    hits=0; // Hits zurücksetzen
+    payOverlay.style.display="none";
+    gameRunning = true;
 });
 
 // ==================== START ====================
