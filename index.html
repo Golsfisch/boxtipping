@@ -3,50 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BoxTipping - Prototyp</title>
+<title>BoxTipping - Original</title>
 <style>
-body {margin:0;font-family:sans-serif;overflow:hidden;user-select:none;background:#111;color:#fff;}
-header {text-align:center;padding:15px;font-size:24px;font-weight:bold;}
-#info {position:absolute;top:20px;left:10px;background:rgba(0,0,0,0.3);padding:5px 10px;border-radius:5px;}
-canvas {display:block;margin:0 auto;background:#222;border:2px solid #fff;border-radius:10px;touch-action:none;}
-#restartBtn {position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;padding:10px 20px;background:lime;color:#000;border:none;border-radius:5px;cursor:pointer;}
-#toMainBtn {display:block;width:90%;margin:20px auto;padding:15px;font-size:20px;border:none;border-radius:5px;background:#4CAF50;color:#fff;cursor:pointer;}
-#mainPage {display:none;padding:20px;}
-#mainPage h1 {text-align:center;margin-bottom:20px;}
-.placeholder {width:45%;height:150px;background:#444;margin:10px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.flex-container {display:flex;flex-wrap:wrap;justify-content:center;}
-button {touch-action: manipulation;}
+body {margin:0; font-family:sans-serif; overflow:hidden; user-select:none; background:#111; color:#fff;}
+header {text-align:center; padding:15px; font-size:24px; font-weight:bold;}
+#info {position:absolute; top:20px; left:10px; background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:5px;}
+canvas {display:block; margin:0 auto; background:#222; border:2px solid #fff; border-radius:10px;}
+#restartBtn {position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none; padding:10px 20px; background:lime; color:#000; border:none; border-radius:5px; cursor:pointer;}
 </style>
 </head>
 <body>
 
 <header>BoxTipping 😊</header>
-<div id="info">Score: 0 | Lives: 3 | Level: 1</div>
+<div id="info">Score: 0 | Lives: 3</div>
 <canvas id="gameCanvas" width="360" height="640"></canvas>
 <button id="restartBtn">Restart</button>
-<button id="toMainBtn">Zur Main Page</button>
-
-<!-- MAIN PAGE -->
-<div id="mainPage">
-<h1>Main Page</h1>
-<div class="flex-container">
-  <div class="placeholder">Platzhalter 1</div>
-  <div class="placeholder">Platzhalter 2</div>
-  <div class="placeholder">Platzhalter 3</div>
-  <div class="placeholder">Platzhalter 4</div>
-</div>
-<p style="text-align:center;margin-top:20px;">Hier werden später Krypto-Zahlungen, Fiat-Guthaben, History-Missionen usw. implementiert.</p>
-<button id="backToGame" style="display:block;margin:20px auto;padding:10px 15px;border:none;border-radius:5px;background:#888;color:#fff;cursor:pointer;">Zurück zum Spiel</button>
-</div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const info = document.getElementById('info');
 const restartBtn = document.getElementById('restartBtn');
-const toMainBtn = document.getElementById('toMainBtn');
-const mainPage = document.getElementById('mainPage');
-const backToGame = document.getElementById('backToGame');
 
 let playerSize = 50;
 let playerX = canvas.width/2 - playerSize/2;
@@ -54,7 +31,6 @@ let playerY = canvas.height - 100;
 
 let score = 0;
 let lives = 3;
-let level = 1;
 let gameOver = false;
 
 // Gegnerklasse
@@ -63,7 +39,7 @@ class Enemy {
     this.size = 40;
     this.x = Math.random()*(canvas.width - this.size);
     this.y = -this.size;
-    this.speed = 2 + level*0.5;
+    this.speed = 2;
   }
   draw(){ctx.fillStyle='yellow'; ctx.fillRect(this.x,this.y,this.size,this.size);}
   update(){
@@ -94,48 +70,23 @@ document.addEventListener('mousemove',(e)=>{
   const rect = canvas.getBoundingClientRect();
   playerX = Math.min(Math.max(e.clientX - rect.left - playerSize/2,0), canvas.width-playerSize);
 });
-canvas.addEventListener('touchmove',(e)=>{
-  const rect = canvas.getBoundingClientRect();
-  playerX = Math.min(Math.max(e.touches[0].clientX - rect.left - playerSize/2,0), canvas.width-playerSize);
-  e.preventDefault();
-});
 
 // Restart
 restartBtn.addEventListener('click',()=>{
-  score = 0; lives = 3; level = 1; gameOver = false; spawnEnemies(); restartBtn.style.display='none';
-});
-
-// Zur Main Page
-toMainBtn.addEventListener('click',()=>{
-  canvas.style.display='none';
-  restartBtn.style.display='none';
-  toMainBtn.style.display='none';
-  mainPage.style.display='block';
-});
-
-// Zurück zum Spiel
-backToGame.addEventListener('click',()=>{
-  canvas.style.display='block';
-  restartBtn.style.display=gameOver?'block':'none';
-  toMainBtn.style.display='block';
-  mainPage.style.display='none';
+  score = 0; lives = 3; gameOver = false; spawnEnemies(); restartBtn.style.display='none';
 });
 
 // Game Loop
 function gameLoop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  // Spieler
+  // Spieler zeichnen
   ctx.fillStyle='red';
   ctx.fillRect(playerX,playerY,playerSize,playerSize);
-  // Gegner
+  // Gegner zeichnen und bewegen
   enemies.forEach(e=>{e.update(); e.draw();});
   // Score
   score += 0.01;
-  if(score >= level*20 && level<4){ // Level bis 4
-    level++;
-    spawnEnemies();
-  }
-  info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives} | Level: ${level}`;
+  info.textContent = `Score: ${Math.floor(score)} | Lives: ${lives}`;
   if(!gameOver) requestAnimationFrame(gameLoop);
 }
 gameLoop();
