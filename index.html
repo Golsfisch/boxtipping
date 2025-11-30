@@ -52,104 +52,68 @@ let bullets = [];
 let powerups = [];
 
 // ------------------------------
-// GAME LOOP
 // ------------------------------
+// SICHERER GAME LOOP
+// ------------------------------
+let gameLoopID;
+let gameRunning = true; // steuert, ob Update/Draw ausgeführt werden
+
 function gameLoop() {
-    gameLoopID = requestAnimationFrame(gameLoop);
-    if (!gameRunning) return;
+    gameLoopID = requestAnimationFrame(gameLoop); // Loop läuft immer
 
-    // Clear Canvas
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if (!gameRunning) return; // Logik pausieren, Loop bleibt aktiv
 
-    // Spieler zeichnen
-    ctx.fillStyle = "red";
-    ctx.fillRect(player.x, player.y, player.w, player.h);
-
-    // Gegner bewegen
-    enemy.y += enemy.speed;
-    ctx.fillStyle = "yellow";
-    ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
-
-    // Collision
-    if(enemy.y + enemy.h >= player.y &&
-       enemy.x < player.x + player.w &&
-       enemy.x + enemy.w > player.x) {
-        lives--;
-        document.getElementById("lives").textContent = lives;
-        resetEnemy();
-
-        if(lives <= 0) endGame();
-    }
-
-    // Gegner unten durch
-    if(enemy.y > 600) {
-        score += 10;
-        document.getElementById("score").textContent = score;
-        resetEnemy();
-    }
-
-    // Platzhalter Powerups & Bullets (können später gefüllt werden)
-    bullets.forEach(b => { ctx.fillStyle="blue"; ctx.fillRect(b.x,b.y,b.w,b.h); });
-    powerups.forEach(p => { ctx.fillStyle="green"; ctx.fillRect(p.x,p.y,p.w,p.h); });
+    update(); // dein bestehendes Update
+    draw();   // dein bestehendes Draw
 }
 
 // ------------------------------
-// FUNKTIONEN
+// GAME OVER
 // ------------------------------
-function resetEnemy(){
-    enemy.y = -40;
-    enemy.x = Math.random() * (canvas.width - enemy.w);
+function endGame() {
+    gameRunning = false; // pausiert Logik
+    document.getElementById("restartBtn").style.display = "block"; // Restart zeigen
 }
 
-function endGame(){
-    gameRunning = false;
-    document.getElementById("restartBtn").style.display = "inline-block";
-}
-
-function startGame(){
-    // Variablen zurücksetzen
-    score = 0;
+// ------------------------------
+// RESTART BUTTON
+// ------------------------------
+document.getElementById("restartBtn").addEventListener("click", () => {
+    // 1️⃣ Variablen zurücksetzen
     lives = 3;
-    level = 1;
+    gameOver = false;
     gameRunning = true;
-    enemy.x = Math.random()*(canvas.width-enemy.w);
-    enemy.y = -40;
+
+    // Score/Level nach Paywall-Logik behalten oder zurücksetzen
+    score = 0;    // wenn Score komplett zurückgesetzt werden soll
+    level = 1;    // falls Level auf 1 zurück
 
     document.getElementById("score").textContent = score;
     document.getElementById("lives").textContent = lives;
     document.getElementById("level").textContent = level;
 
+    // 2️⃣ Spieler zurücksetzen
+    player.x = canvas.width / 2 - player.size / 2;
+    player.y = canvas.height - 120;
+
+    // 3️⃣ Gegner, Bullets, Powerups löschen
+    enemies = [];
     bullets = [];
     powerups = [];
 
-    document.getElementById("restartBtn").style.display = "none";
+    // 4️⃣ Buttons ausblenden
+    restartBtn.style.display = "none";
 
-    gameLoop();
-}
+    // 5️⃣ Gegner neu spawnen, falls Funktion existiert
+    if (typeof spawnEnemies === "function") spawnEnemies();
 
-// ------------------------------
-// EVENTLISTENER
-// ------------------------------
-document.addEventListener("keydown", (e)=>{
-    if(e.key==="ArrowLeft") player.x -= player.speed;
-    if(e.key==="ArrowRight") player.x += player.speed;
-
-    if(player.x<0) player.x=0;
-    if(player.x+player.w>canvas.width) player.x=canvas.width-player.w;
-});
-
-// Restart Button
-document.getElementById("restartBtn").addEventListener("click", startGame);
-
-// Menü Button
-document.getElementById("menuBtn").addEventListener("click", ()=>{
-    window.location.href = "seite3.html";
+    // 6️⃣ Game Loop läuft weiter automatisch, kein RequestAnimationFrame neu nötig
 });
 
 // ------------------------------
 // GAME START
 // ------------------------------
-startGame();
+gameLoop(); // einmal beim Laden starten
 </script>
 
 </body>
