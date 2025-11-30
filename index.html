@@ -3,41 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BoxTipping</title>
+<title>Box's Mysterium</title>
 <style>
-body {margin:0; font-family:sans-serif; color:#fff; overflow:hidden; display:flex; flex-direction:column; align-items:center; user-select:none; -webkit-user-select:none; -moz-user-select:none; transition: background 0.3s, color 0.3s;}
-header {width:100%; text-align:center; padding:15px; font-size:24px; font-weight:bold; letter-spacing:2px; transition: background 0.3s, color 0.3s;}
-section {width:100%; height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; position:relative; transition: background 0.3s, color 0.3s;}
-canvas {border:2px solid #fff; touch-action:none; border-radius:10px; margin-top:10px; background:#111; transition: background 0.3s;}
-#info {position:absolute; top:20px; left:10px; font-size:18px; background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:5px; transition: background 0.3s, color 0.3s;}
-#powerups {position:absolute; top:20px; right:10px; display:flex; gap:5px;}
-.powerup {width:30px; height:30px; background:lime; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:18px;}
-#weapons {position:absolute; bottom:80px; right:10px; display:flex; gap:5px;}
-.weaponBtn {padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;}
-#laserBtn {background:red; color:#fff;}
-#bombBtn {background:orange; color:#000;}
-#freezeBtn {background:cyan; color:#000;}
-button {padding:12px 25px; font-size:16px; border:none; border-radius:5px; cursor:pointer; margin:5px; transition: background 0.3s, color 0.3s;}
-#toMainPage {background:blue; color:#fff; position:absolute; bottom:20px; left:50%; transform:translateX(-50%);}
-#payMainPage {background:gold; color:#000; margin-top:20px; display:none;}
-#brand {position:absolute; bottom:10px; left:10px; font-size:14px; color:#888;}
-#restartBtn {background:lime; color:#000; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:none;}
-#darkModeToggle {position:absolute; top:20px; right:20px; padding:8px 12px; border-radius:5px; background:#555; color:#fff; cursor:pointer; z-index:1000;}
-/* Dark & Light Mode */
-body.light {background:#f5f5f5; color:#000;}
-body.light header {background:#ddd; color:#000;}
-body.light section {background:#fff; color:#000;}
-body.light canvas {background:#eee;}
-body.light button {color:#000;}
-body.dark {background:#0b0b0b; color:#fff;}
-body.dark header {background:rgba(0,0,0,0.5); color:#fff;}
-body.dark section {background:#111; color:#fff;}
-body.dark canvas {background:#111;}
+body {margin:0;font-family:sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;-moz-user-select:none;transition:background 0.3s,color 0.3s;}
+header {width:100%;text-align:center;padding:15px;font-size:24px;font-weight:bold;letter-spacing:2px;transition:background 0.3s,color 0.3s;display:flex;justify-content:center;align-items:center;gap:10px;}
+section{width:100%;height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:background 0.3s,color 0.3s;}
+canvas{border:2px solid #fff;border-radius:10px;margin-top:10px;background:#111;transition:background 0.3s;}
+#info{position:absolute;top:20px;left:10px;font-size:18px;background:rgba(0,0,0,0.3);padding:5px 10px;border-radius:5px;transition:background 0.3s,color 0.3s;}
+#powerups{position:absolute;top:20px;right:10px;display:flex;gap:5px;}
+.powerup{width:30px;height:30px;background:lime;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:18px;}
+#weapons{position:absolute;bottom:80px;right:10px;display:flex;gap:5px;}
+.weaponBtn{padding:10px;border:none;border-radius:5px;font-weight:bold;cursor:pointer;}
+#laserBtn{background:red;color:#fff;}
+#bombBtn{background:orange;color:#000;}
+#freezeBtn{background:cyan;color:#000;}
+button{padding:12px 25px;font-size:16px;border:none;border-radius:5px;cursor:pointer;margin:5px;transition:background 0.3s,color 0.3s;}
+#toMainPage{background:blue;color:#fff;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);}
+#payMainPage{background:gold;color:#000;margin-top:20px;display:none;}
+#brand{position:absolute;bottom:10px;left:10px;font-size:14px;color:#888;}
+#restartBtn{background:lime;color:#000;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;}
+#darkModeToggle{position:absolute;top:20px;right:20px;padding:8px 12px;border-radius:5px;background:#555;color:#fff;cursor:pointer;z-index:1000;}
+/* Light & Dark Mode */
+body.light{background:#f5f5f5;color:#000;}
+body.light header{background:#ddd;color:#000;}
+body.light section{background:#fff;color:#000;}
+body.light canvas{background:#eee;}
+body.light button{color:#000;}
+body.dark{background:#0b0b0b;color:#fff;}
+body.dark header{background:rgba(0,0,0,0.5);color:#fff;}
+body.dark section{background:#111;color:#fff;}
+body.dark canvas{background:#111;}
+/* MainPage placeholders */
+#mainSection h1{margin-bottom:20px;}
+.placeholder{width:45%;height:200px;background:rgba(100,100,100,0.3);margin:10px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;}
+#mainPlaceholders{display:flex;flex-wrap:wrap;justify-content:center;width:100%;}
+#reloadKangaroo{position:absolute;top:20px;left:20px;width:50px;height:50px;cursor:pointer;user-select:none;}
 </style>
 </head>
 <body class="dark">
 
-<header>BoxTipping</header>
+<header>Box's Mysterium <span>😊</span></header>
 <div id="darkModeToggle">Dark Mode</div>
 
 <!-- --- GAME SECTION --- -->
@@ -57,42 +62,38 @@ body.dark canvas {background:#111;}
 
 <!-- --- MAIN PAGE SECTION --- -->
 <section id="mainSection">
-<h1>Main Page</h1>
+<h1>KalaTT</h1>
+<img id="reloadKangaroo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Kangaroo_Australia.png/50px-Kangaroo_Australia.png" alt="Reload">
+<div id="mainPlaceholders">
+    <div class="placeholder">Platzhalter 1</div>
+    <div class="placeholder">Platzhalter 2</div>
+    <div class="placeholder">Platzhalter 3</div>
+    <div class="placeholder">Platzhalter 4</div>
+</div>
 <button id="payMainPage">Zutritt ab Level 21 für 0,00001 ETH</button>
 <div id="accessStatus" style="margin-top:15px; font-size:18px; color:lime;"></div>
 <button id="backToGame">Back to Game</button>
 <div id="brand">@thesafe</div>
 </section>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
 <script>
 // ------------------- PAGE SWITCH -------------------
-const gameSection = document.getElementById('gameSection');
-const mainSection = document.getElementById('mainSection');
-document.getElementById('toMainPage').addEventListener('click', ()=>{
-    gameSection.style.display='none';
-    mainSection.style.display='flex';
-});
-document.getElementById('backToGame').addEventListener('click', ()=>{
-    mainSection.style.display='none';
-    gameSection.style.display='flex';
-});
+const gameSection=document.getElementById('gameSection');
+const mainSection=document.getElementById('mainSection');
+document.getElementById('toMainPage').addEventListener('click',()=>{gameSection.style.display='none';mainSection.style.display='flex';});
+document.getElementById('backToGame').addEventListener('click',()=>{mainSection.style.display='none';gameSection.style.display='flex';});
+document.getElementById('reloadKangaroo').addEventListener('click',()=>{location.reload();});
 
 // ------------------- DARK MODE -------------------
 const darkToggle=document.getElementById('darkModeToggle');
 let darkMode=localStorage.getItem('darkMode')||'dark';
 document.body.className=darkMode;
 darkToggle.textContent = darkMode==='dark'?'Dark Mode':'Light Mode';
-
 darkToggle.addEventListener('click',()=>{
     if(document.body.classList.contains('dark')){
-        document.body.classList.remove('dark'); document.body.classList.add('light');
-        darkToggle.textContent='Light Mode';
-        localStorage.setItem('darkMode','light');
-    }else{
-        document.body.classList.remove('light'); document.body.classList.add('dark');
-        darkToggle.textContent='Dark Mode';
-        localStorage.setItem('darkMode','dark');
-    }
+        document.body.classList.remove('dark');document.body.classList.add('light');darkToggle.textContent='Light Mode';localStorage.setItem('darkMode','light');
+    }else{document.body.classList.remove('light');document.body.classList.add('dark');darkToggle.textContent='Dark Mode';localStorage.setItem('darkMode','dark');}
 });
 
 // ------------------- GAME SETUP -------------------
@@ -101,60 +102,59 @@ const ctx=canvas.getContext('2d');
 const info=document.getElementById('info');
 const powerupDiv=document.getElementById('powerups');
 const restartBtn=document.getElementById('restartBtn');
-
 let score=0, level=1, timeLeft=60, gameOver=false, lives=3, unlocked=false;
-let activePowerups={}, weaponCooldowns={laser:0,bomb:0,freeze:0};
+let activePowerups={}, weaponCooldowns={laser:0,bomb:0,freeze:0}, bombs=[];
 const weaponCooldownTime={laser:1000,bomb:5000,freeze:3000};
-let bombs=[];
 
-class Box{constructor(){this.size=50;this.x=canvas.width/2-25;this.y=canvas.height-100;} draw(){ctx.fillStyle='red'; ctx.fillRect(this.x,this.y,this.size,this.size);} }
-class Enemy{constructor(){this.size=40;this.x=Math.random()*(canvas.width-40);this.y=-this.size;this.speed=2+Math.random()*level; this.frozen=false;} draw(){ctx.fillStyle='yellow'; ctx.fillRect(this.x,this.y,this.size,this.size);} update(){if(!this.frozen){this.y+=this.speed; if(this.y+this.size>=playerBox.y && this.y<=playerBox.y+playerBox.size && this.x+this.size>=playerBox.x && this.x<=playerBox.x+playerBox.size){lives--; this.y=-this.size; this.x=Math.random()*(canvas.width-this.size); if(lives<=0){gameOver=true; restartBtn.style.display='block';}} if(this.y>canvas.height){ this.y=-this.size; this.x=Math.random()*(canvas.width-this.size); }}}}
+const missions=[
+    "Finde die geheimnisvolle Box",
+    "Entkomme den gelben Boxen",
+    "Nutze Laser clever",
+    "Sammle Bonuspunkte",
+    "Erreiche Level 5",
+    "Löse das Rätsel der Bomben"
+];
+
+class Box{constructor(){this.size=50;this.x=canvas.width/2-25;this.y=canvas.height-100;} draw(){ctx.fillStyle='red';ctx.fillRect(this.x,this.y,this.size,this.size);}}
+class Enemy{constructor(){this.size=40;this.x=Math.random()*(canvas.width-40);this.y=-this.size;this.speed=2+Math.random()*level;this.frozen=false;} draw(){ctx.fillStyle='yellow';ctx.fillRect(this.x,this.y,this.size,this.size);} update(){if(!this.frozen){this.y+=this.speed;if(this.y+this.size>=playerBox.y && this.y<=playerBox.y+playerBox.size && this.x+this.size>=playerBox.x && this.x<=playerBox.x+playerBox.size){lives--; this.y=-this.size; this.x=Math.random()*(canvas.width-this.size); if(lives<=0){gameOver=true;restartBtn.style.display='block';}}if(this.y>canvas.height){this.y=-this.size; this.x=Math.random()*(canvas.width-this.size);}}}}
 
 let playerBox=new Box();
 let enemies=[];
-function spawnEnemies(){ enemies=[]; for(let i=0;i<level+3;i++) enemies.push(new Enemy()); }
+function spawnEnemies(){enemies=[];for(let i=0;i<level+3;i++)enemies.push(new Enemy());}
 spawnEnemies();
 
-function spawnPowerup(){ if(Math.random()<0.2){ const type='scoreX2'; activePowerups[type]=Date.now()+10000; renderPowerups(); }}
-function renderPowerups(){ powerupDiv.innerHTML=''; for(let p in activePowerups){ const div=document.createElement('div'); div.className='powerup'; div.textContent='x2'; powerupDiv.appendChild(div); }}
+function spawnPowerup(){if(Math.random()<0.2){const type='scoreX2';activePowerups[type]=Date.now()+10000;renderPowerups();}}
+function renderPowerups(){powerupDiv.innerHTML='';for(let p in activePowerups){const div=document.createElement('div');div.className='powerup';div.textContent='x2';powerupDiv.appendChild(div);}}
 
-// ------------------- LASER & BOMB -------------------
 function useWeapon(type){
-    const now=Date.now(); if(now<weaponCooldowns[type]) return; weaponCooldowns[type]=now+weaponCooldownTime[type];
+    const now=Date.now();if(now<weaponCooldowns[type])return;weaponCooldowns[type]=now+weaponCooldownTime[type];
     if(type==='laser'){
-        ctx.strokeStyle='red'; ctx.lineWidth=4;
-        ctx.beginPath(); ctx.moveTo(playerBox.x+playerBox.size/2, playerBox.y); ctx.lineTo(playerBox.x+playerBox.size/2,0); ctx.stroke();
-        enemies.forEach(e=>{ if(e.y<playerBox.y) { e.y=-e.size; score++; }});
+        ctx.strokeStyle='red';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(playerBox.x+playerBox.size/2,playerBox.y);ctx.lineTo(playerBox.x+playerBox.size/2,0);ctx.stroke();
+        enemies.forEach(e=>{if(e.y<playerBox.y){e.y=-e.size;score++;}});
     } else if(type==='bomb'){
-        const bombX=playerBox.x+playerBox.size/2; const bombY=playerBox.y;
-        bombs.push({x:bombX,y:bombY,radius:0,explode:false});
-    } else if(type==='freeze'){ enemies.forEach(e=>{ e.frozen=true; }); setTimeout(()=>{ enemies.forEach(e=>{ e.frozen=false; }); },3000);}
+        const bombX=playerBox.x+playerBox.size/2; const bombY=playerBox.y; bombs.push({x:bombX,y:bombY,radius:0,explode:false});
+    } else if(type==='freeze'){enemies.forEach(e=>{e.frozen=true;});setTimeout(()=>{enemies.forEach(e=>{e.frozen=false;});},3000);}
 }
-
 document.getElementById('laserBtn').addEventListener('click',()=>useWeapon('laser'));
 document.getElementById('bombBtn').addEventListener('click',()=>useWeapon('bomb'));
 document.getElementById('freezeBtn').addEventListener('click',()=>useWeapon('freeze'));
 
-// ------------------- RESTART -------------------
-restartBtn.addEventListener('click', ()=>{
-    score=0; level=1; timeLeft=60; lives=3; gameOver=false; unlocked=false;
-    restartBtn.style.display='none'; document.getElementById('payMainPage').style.display='none';
-    spawnEnemies(); bombs=[];
-    gameLoop();
-});
+restartBtn.addEventListener('click',()=>{score=0;level=1;timeLeft=60;lives=3;gameOver=false;unlocked=false;restartBtn.style.display='none';document.getElementById('payMainPage').style.display='none';spawnEnemies();bombs=[];gameLoop();});
 
-// ------------------- GAME LOOP -------------------
 function gameLoop(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     playerBox.draw();
-    enemies.forEach(e=>{ e.update(); e.draw(); });
-    // Bomb Update
-    bombs.forEach((b,i)=>{
-        if(!b.explode){ b.y-=2; b.radius+=2; ctx.fillStyle='orange'; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); if(b.radius>30){ b.explode=true; enemies.forEach(e=>{ const dx=b.x-(e.x+e.size/2); const dy=b.y-(e.y+e.size/2); const dist=Math.sqrt(dx*dx+dy*dy); if(dist<50){ e.y=-e.size; score++; }}); setTimeout(()=>{bombs.splice(i,1);},200);} }});
-    info.textContent=`Score: ${score} | Level: ${level} | Lives: ${lives} | Time: ${timeLeft}`;
+    enemies.forEach(e=>{e.update();e.draw();});
+    bombs.forEach((b,i)=>{if(!b.explode){b.y-=2;b.radius+=2;ctx.fillStyle='orange';ctx.beginPath();ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);ctx.fill();if(b.radius>30){b.explode=true;enemies.forEach(e=>{const dx=b.x-(e.x+e.size/2);const dy=b.y-(e.y+e.size/2);const dist=Math.sqrt(dx*dx+dy*dy);if(dist<50){e.y=-e.size;score++;}});setTimeout(()=>{bombs.splice(i,1);},200);}}});
+    info.textContent=`Score: ${score} | Level: ${level} | Lives: ${lives} | Time: ${timeLeft} | Mission: ${missions[level%missions.length]}`;
     if(!gameOver) requestAnimationFrame(gameLoop);
 }
 gameLoop();
+
+// ------------------- MAIN PAGE PAYMENT (placeholder) -------------------
+const payMainPageBtn=document.getElementById('payMainPage');
+const accessStatus=document.getElementById('accessStatus');
+payMainPageBtn.addEventListener('click',()=>{alert("Payment-Funktion später implementieren.");});
 </script>
 </body>
 </html>
